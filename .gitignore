@@ -1,2 +1,6 @@
-# Project exclude paths
-/target/
+*.class
+*.jar
+target
+.idea
+TestTaskWithMongo.iml
+uploads
