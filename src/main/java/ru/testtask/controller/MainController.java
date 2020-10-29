@@ -42,7 +42,6 @@ public class MainController {
         if (project.getName() == null){
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-
         projectService.createProject(project);
         return new ResponseEntity<>(project, HttpStatus.CREATED);
     }
