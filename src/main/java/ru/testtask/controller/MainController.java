@@ -22,7 +22,7 @@ public class MainController {
         Optional<Project> project = projectService.findProjectById(id);
 
         if (project.isEmpty())
-            return new ResponseEntity<>("Project not found", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("Project with ID " + id + " does not found", HttpStatus.NOT_FOUND);
 
         return new ResponseEntity<>(project, HttpStatus.OK);
     }
@@ -32,7 +32,7 @@ public class MainController {
         Project project = projectService.findProjectByName(name);
 
         if (project == null)
-            return new ResponseEntity<>("Project not found", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("Project with name " + name + " not found", HttpStatus.NOT_FOUND);
 
         return new ResponseEntity<>(project, HttpStatus.OK);
     }
@@ -62,12 +62,12 @@ public class MainController {
     public ResponseEntity<String> deleteProject(@PathVariable("id") String id) {
 
         if (projectService.findProjectById(id).isEmpty()) {
-            return new ResponseEntity<>("This project does not exist!", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("Project with ID " + id + " does not found", HttpStatus.NOT_FOUND);
         }
 
         projectService.deleteProject(id);
 
-        return new ResponseEntity<>("Succesfully removed", HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>("Project with ID " + id + " removed successfully", HttpStatus.NO_CONTENT);
     }
 
 
