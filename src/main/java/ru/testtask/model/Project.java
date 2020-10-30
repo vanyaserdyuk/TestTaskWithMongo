@@ -22,6 +22,7 @@ public class Project {
     private String name;
 
     @Getter
+    @Setter
     private List<Attribute> attributes = new ArrayList<>();
     @Getter
     private List<Geometry> geometries = new ArrayList<>();
