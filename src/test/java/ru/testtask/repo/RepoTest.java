@@ -1,3 +1,5 @@
+package ru.testtask.repo;
+
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.internal.MongoClientImpl;
 import org.junit.Before;
