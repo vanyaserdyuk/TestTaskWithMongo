@@ -1,6 +1,8 @@
 package ru.testtask.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
 
 import ru.testtask.model.Attribute;
@@ -16,6 +18,9 @@ import java.util.UUID;
 public class ProjectService {
     @Autowired
     private ProjectRepo projectRepo;
+
+    @Autowired
+    UserService userService;
 
     public ProjectService() {
     }
@@ -35,6 +40,9 @@ public class ProjectService {
             project.addGeometry(Geometry.builder().name("geometry" + i).id(UUID.randomUUID().toString()).build());
             project.addAttribute(Attribute.builder().name("geometry" + i).id(UUID.randomUUID().toString()).build());
         }
+
+        project.setOwnerId(userService.getCurrentUserId());
+
         projectRepo.insert(project);
         return findProjectByName(project.getName());
     }

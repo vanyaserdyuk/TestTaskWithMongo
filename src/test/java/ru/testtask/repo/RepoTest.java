@@ -1,9 +1,10 @@
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.internal.MongoClientImpl;
+package ru.testtask.repo;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import ru.testtask.model.Attribute;
 import ru.testtask.model.Geometry;
@@ -16,6 +17,7 @@ import static org.junit.Assert.assertNotNull;
 
 @RunWith(SpringRunner.class)
 @DataMongoTest
+@TestPropertySource("/application-test.properties")
 public class RepoTest {
 
     ProjectRepo projectRepo;

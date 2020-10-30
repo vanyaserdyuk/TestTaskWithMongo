@@ -1,9 +1,7 @@
 package ru.testtask.model;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.mapping.Document;
 import javax.persistence.Id;
 import java.util.ArrayList;
@@ -11,10 +9,13 @@ import java.util.List;
 
 @Document(collection = "projects")
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Project {
 
     @Id
     @Getter
+    @Setter
     private String id;
 
     @Setter
@@ -22,6 +23,11 @@ public class Project {
     private String name;
 
     @Getter
+    @Setter
+    private String ownerId;
+
+    @Getter
+    @Setter
     private List<Attribute> attributes = new ArrayList<>();
     @Getter
     private List<Geometry> geometries = new ArrayList<>();
