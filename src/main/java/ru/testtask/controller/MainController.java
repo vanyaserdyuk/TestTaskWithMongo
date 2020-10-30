@@ -3,6 +3,7 @@ package ru.testtask.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.testtask.model.Project;
 import ru.testtask.service.ProjectService;
@@ -55,6 +56,7 @@ public class MainController {
         return new ResponseEntity<>(projects, HttpStatus.OK);
     }
 
+    @PreAuthorize("projectService.findProjectById(#id).getOwnerId() == userService.getCurrentUserId()")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteProject(@PathVariable("id") String id) {
 
@@ -67,7 +69,7 @@ public class MainController {
         return new ResponseEntity<>("Succesfully removed", HttpStatus.NO_CONTENT);
     }
 
-
+    @PreAuthorize("projectService.findProjectById(#id).getOwnerId() == userService.getCurrentUserId()")
     @PutMapping("/{id}")
     public ResponseEntity<Project> updateProject(@PathVariable("id") String id, @RequestParam(value = "name") String name) {
         Optional<Project> project = projectService.findProjectById(id);
