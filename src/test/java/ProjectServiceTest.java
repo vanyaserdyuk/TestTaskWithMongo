@@ -8,8 +8,8 @@ import ru.testtask.model.Geometry;
 import ru.testtask.model.Project;
 import ru.testtask.service.ProjectService;
 import java.util.List;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+
+import static org.junit.Assert.*;
 
 
 @RunWith(SpringRunner.class)
@@ -46,5 +46,12 @@ public class ProjectServiceTest {
             assertNotNull(attribute.getName());
             assertNotNull(attribute.getId());
         }
+    }
+
+    @Test
+    public void checkSimilarNamesCreationTest(){
+        Project resultProject = projectService.createProject(testProject);
+        Project resultProject2 = projectService.createProject(testProject);
+        assertNotEquals(resultProject2, resultProject);
     }
 }
