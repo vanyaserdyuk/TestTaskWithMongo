@@ -56,8 +56,8 @@ public class MainController {
         Project project = projectDtoConverter.convertDTOtoProject(createProjectDTO);
 
         try {
-            projectService.createProject(project);
-            return new ResponseEntity<>(projectDtoConverter.convertProjectToDTO(project), HttpStatus.CREATED);
+            return new ResponseEntity<>(projectDtoConverter.convertProjectToDTO(projectService.createProject(project)),
+                    HttpStatus.CREATED);
         }
         catch(NameAlreadyExistsException e){
             return new ResponseEntity<>(HttpStatus.CONFLICT);
@@ -78,7 +78,7 @@ public class MainController {
         return new ResponseEntity<>(dtos, HttpStatus.OK);
     }
 
-    @PreAuthorize("projectService.isCurrentUserOwnerOf(#id) or hasAuthority('MODERATOR')")
+    @PreAuthorize("hasAuthority('MODERATOR') or projectService.isCurrentUserOwnerOf(#id)")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteProject(@PathVariable("id") String id) {
 
@@ -91,7 +91,7 @@ public class MainController {
         return new ResponseEntity<>(String.format("Project with ID %s removed successfully", id), HttpStatus.NO_CONTENT);
     }
 
-    @PreAuthorize("projectService.isCurrentUserOwnerOf(#id) or hasAuthority('MODERATOR')")
+    @PreAuthorize("hasAuthority('MODERATOR') ")
     @PutMapping("/{id}")
     public ResponseEntity<Project> updateProject(@PathVariable("id") String id, @RequestBody ProjectDTO projectDTO) {
         if (!projectDTO.getId().equals(id)){
