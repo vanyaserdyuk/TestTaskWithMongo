@@ -13,9 +13,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import ru.testtask.model.Project;
+import ru.testtask.repo.ProjectRepo;
 import ru.testtask.service.ProjectService;
-
-import javax.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Optional;
@@ -23,7 +22,7 @@ import java.util.Optional;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@RunWith(MockitoJUnitRunner.class)
+
 @WebMvcTest
 public class MainControllerTest {
 
@@ -36,23 +35,26 @@ public class MainControllerTest {
     @MockBean
     private ProjectService projectService;
 
+    @MockBean
+    private ProjectRepo projectRepo;
+
 
 
 
 
     @Test
     public void postProjectTest() throws Exception {
-        Project project = Project.builder().id("a").name("prj").
-        attributes(new ArrayList<>()).geometries(new ArrayList<>()).build();
+        Project project = new Project();
+        project.setName("prj");
 
         Mockito.when(projectService.createProject(Mockito.any())).thenReturn(project);
+        project.setId("a");
         mockMvc.perform(
-                MockMvcRequestBuilders.post("/projects/")
+                MockMvcRequestBuilders.post("/api/projects/")
                         .content(objectMapper.writeValueAsString(project))
                         .contentType(MediaType.APPLICATION_JSON)
         )
-                .andExpect(status().isCreated())
-                .andExpect(content().json(objectMapper.writeValueAsString(project)));
+                .andExpect(status().isCreated());
     }
 
 
@@ -75,20 +77,19 @@ public class MainControllerTest {
         Mockito.when(projectService.findProjectById(Mockito.anyString())).
                 thenReturn(Optional.empty());
         mockMvc.perform(
-                MockMvcRequestBuilders.get("/projects/a"))
-                .andExpect(status().isNotFound())
-                .andExpect(mvcResult -> mvcResult.getResolvedException().getClass()
-                        .equals(EntityNotFoundException.class));
+                MockMvcRequestBuilders.get("/api/projects/a"))
+                .andExpect(status().isNotFound());
     }
+
     @Test
     public void putProjectTest() throws Exception {
-        Project project = Project.builder().id("a").name("prj").build();
+        Project project = Project.builder().id("a").name("prj1").build();
+        String name = "prj";
 
         Mockito.when(projectService.findProjectById(Mockito.anyString())).thenReturn(Optional.of(project));
         mockMvc.perform(
-                MockMvcRequestBuilders.put("/projects/")
-                        .content(objectMapper.writeValueAsString(Project.builder().id("a").name("prj")
-                                .build()))
+                MockMvcRequestBuilders.put("/api/projects/a")
+                        .content(objectMapper.writeValueAsString("prj"))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.id").value("a"))
@@ -102,8 +103,8 @@ public class MainControllerTest {
 
         Mockito.when(projectService.findProjectById(Mockito.anyString())).thenReturn(Optional.of(project));
         mockMvc.perform(
-                MockMvcRequestBuilders.delete("/projects/a"))
-                .andExpect(status().isOk());
+                MockMvcRequestBuilders.delete("/api/projects/a"))
+                .andExpect(status().isNoContent());
     }
 
     @Test
@@ -115,7 +116,7 @@ public class MainControllerTest {
 
         Mockito.when(projectService.findAllProjects()).thenReturn(Arrays.asList(project, project1));
         mockMvc.perform(
-                MockMvcRequestBuilders.get("/projects/"))
+                MockMvcRequestBuilders.get("/api/projects/"))
                 .andExpect(status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(Arrays.asList(project, project1))));
 
