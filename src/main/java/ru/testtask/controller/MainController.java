@@ -5,8 +5,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.testtask.converter.DTOConverter;
-import ru.testtask.dto.ClientProjectDTO;
+import ru.testtask.converter.ProjectDTOConverter;
+import ru.testtask.dto.CreateProjectDTO;
 import ru.testtask.dto.ProjectDTO;
 import ru.testtask.model.Project;
 import ru.testtask.service.ProjectService;
@@ -22,7 +22,7 @@ public class MainController {
     private ProjectService projectService;
 
     @Autowired
-    private DTOConverter dtoConverter;
+    private ProjectDTOConverter projectDtoConverter;
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getProjectById(@PathVariable("id") String id) {
@@ -31,7 +31,7 @@ public class MainController {
         if (project.isEmpty())
             return new ResponseEntity<>("Project with ID " + id + " does not found", HttpStatus.NOT_FOUND);
 
-        return new ResponseEntity<>(dtoConverter.convertToDTO(project.get()), HttpStatus.OK);
+        return new ResponseEntity<>(projectDtoConverter.convertProjectToDTO(project.get()), HttpStatus.OK);
     }
 
     @GetMapping("/name/{name}")
@@ -41,18 +41,18 @@ public class MainController {
         if (project == null)
             return new ResponseEntity<>("Project with name " + name + " not found", HttpStatus.NOT_FOUND);
 
-        return new ResponseEntity<>(dtoConverter.convertToDTO(project), HttpStatus.OK);
+        return new ResponseEntity<>(projectDtoConverter.convertProjectToDTO(project), HttpStatus.OK);
     }
 
     @PostMapping()
-    public ResponseEntity<ProjectDTO> postProject(@RequestBody ClientProjectDTO clientProjectDTO) {
-        if (clientProjectDTO.getName() == null){
+    public ResponseEntity<ProjectDTO> postProject(@RequestBody CreateProjectDTO createProjectDTO) {
+        if (createProjectDTO.getName() == null){
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        Project project = dtoConverter.convertDTOtoProject(clientProjectDTO);
+        Project project = projectDtoConverter.convertDTOtoProject(createProjectDTO);
 
         projectService.createProject(project);
-        return new ResponseEntity<>(dtoConverter.convertToDTO(projectService.findProjectByName(clientProjectDTO.getName()))
+        return new ResponseEntity<>(projectDtoConverter.convertProjectToDTO(project)
                 ,HttpStatus.CREATED);
     }
 
@@ -60,7 +60,7 @@ public class MainController {
     @GetMapping()
     public ResponseEntity<List<ProjectDTO>> getAllProjects() {
         List<Project> projects = projectService.findAllProjects();
-        List<ProjectDTO> dtos = dtoConverter.getDTOProjectsList(projects);
+        List<ProjectDTO> dtos = projectDtoConverter.getDTOProjectsList(projects);
 
         if (projects.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -73,12 +73,12 @@ public class MainController {
     public ResponseEntity<String> deleteProject(@PathVariable("id") String id) {
 
         if (projectService.findProjectById(id).isEmpty()) {
-            return new ResponseEntity<>("Project with ID " + id + " does not found", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(String.format("Project with ID %s does not found", id), HttpStatus.NOT_FOUND);
         }
 
         projectService.deleteProject(id);
 
-        return new ResponseEntity<>("Project with ID " + id + " removed successfully", HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(String.format("Project with ID %s removed successfully", id), HttpStatus.NO_CONTENT);
     }
 
     @PutMapping("/{id}")
@@ -88,14 +88,14 @@ public class MainController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
-        Optional<Project> project = projectService.findProjectById(id);
+        Optional<Project> optionalProject = projectService.findProjectById(id);
 
-        if (project.isPresent()){
-            Project p = project.get();
-            p.setName(projectDTO.getName());
-            p.setAttributes(dtoConverter.getAttrListFromDTO(projectDTO.getAttrs()));
-            projectService.updateProject(p);
-            return new ResponseEntity<>(p, HttpStatus.OK);
+        if (optionalProject.isPresent()){
+            Project project = optionalProject.get();
+            project.setName(projectDTO.getName());
+            project.setAttributes(projectDtoConverter.getAttrListFromDTO(projectDTO.getAttributes()));
+            projectService.updateProject(project);
+            return new ResponseEntity<>(project, HttpStatus.OK);
         }
 
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);

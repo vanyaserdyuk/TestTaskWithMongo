@@ -1,17 +1,16 @@
 package ru.testtask.dto;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.NonNull;
+import lombok.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ProjectDTO {
-    @NonNull
     private String id;
-    @NonNull
     private String name;
-    private List<AttrDTO> attrs;
+    private List<AttrDTO> attributes;
 }

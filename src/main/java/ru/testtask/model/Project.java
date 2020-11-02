@@ -1,9 +1,7 @@
 package ru.testtask.model;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.mongodb.core.mapping.Document;
 import javax.persistence.Id;
 import java.util.ArrayList;
@@ -11,6 +9,8 @@ import java.util.List;
 
 @Document(collection = "projects")
 @NoArgsConstructor
+@Builder
+@RequiredArgsConstructor
 public class Project {
 
     @Id
@@ -25,6 +25,7 @@ public class Project {
     @Setter
     private List<Attribute> attributes = new ArrayList<>();
     @Getter
+    @NotNull
     private List<Geometry> geometries = new ArrayList<>();
 
 
