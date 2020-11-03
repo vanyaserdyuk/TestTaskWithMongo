@@ -64,7 +64,7 @@ public class MainController {
         return new ResponseEntity<>(projects, HttpStatus.OK);
     }
 
-    @PreAuthorize("projectService.findProjectById(#id).getOwnerId() == userService.getCurrentUserId() or hasAuthority('MODERATOR')")
+    @PreAuthorize("projectService.isOwner(#id) or hasAuthority('MODERATOR')")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteProject(@PathVariable("id") String id) {
 
@@ -77,7 +77,7 @@ public class MainController {
         return new ResponseEntity<>("Succesfully removed", HttpStatus.NO_CONTENT);
     }
 
-    @PreAuthorize("projectService.findProjectById(#id).getOwnerId() == userService.getCurrentUserId() or hasAuthority('MODERATOR')")
+    @PreAuthorize("projectService.isOwner(#id) or hasAuthority('MODERATOR')")
     @PutMapping("/{id}")
     public ResponseEntity<Project> updateProject(@PathVariable("id") String id, @RequestParam(value = "name") String name) {
         Optional<Project> project = projectService.findProjectById(id);
@@ -92,20 +92,6 @@ public class MainController {
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
-    @PutMapping("/user/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable("id") String id, @RequestBody User clientUser) {
-        Optional<User> optionalUser = userService.getUserById(id);
 
-
-        if (optionalUser.isPresent()){
-            User user = optionalUser.get();
-            user.setRoles(clientUser.getRoles());
-            userService.updateUser(user);
-            return new ResponseEntity<>(user, HttpStatus.OK);
-        }
-
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-    }
 
 }
