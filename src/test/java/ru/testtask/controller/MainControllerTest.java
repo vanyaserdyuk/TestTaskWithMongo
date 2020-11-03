@@ -10,15 +10,20 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import ru.testtask.model.Attribute;
+import ru.testtask.model.Geometry;
 import ru.testtask.model.Project;
 import ru.testtask.repo.ProjectRepo;
 import ru.testtask.service.ProjectService;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.internal.bytebuddy.matcher.ElementMatchers.is;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -54,7 +59,8 @@ public class MainControllerTest {
                         .content(objectMapper.writeValueAsString(project))
                         .contentType(MediaType.APPLICATION_JSON)
         )
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andExpect(MockMvcResultMatchers.jsonPath(objectMapper.writeValueAsString(project)));
     }
 
 
@@ -62,6 +68,8 @@ public class MainControllerTest {
     public void getProjectByIdTest() throws Exception {
         Project project = Project.builder().id("a").name("prj")
                 .attributes(new ArrayList<>()).geometries(new ArrayList<>()).build();
+        List<Attribute> attributeList = new ArrayList<>();
+        attributeList.add(Attribute.builder().name("attr").id("id").build());
 
         Mockito.when(projectService.findProjectById(Mockito.anyString())).thenReturn(Optional.of(project));
         mockMvc.perform(
@@ -69,7 +77,9 @@ public class MainControllerTest {
                         get("/api/projects/a"))
                 .andExpect(status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.id").value("a"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.name").value("prj"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.name").value("prj"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.attrs[0].id" , is("id")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.attrs[0].name" , is("attr")));
     }
 
     @Test
