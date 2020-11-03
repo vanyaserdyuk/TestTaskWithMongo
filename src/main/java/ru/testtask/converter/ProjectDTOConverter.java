@@ -18,10 +18,15 @@ import java.util.stream.Collectors;
 public class ProjectDTOConverter {
 
     @Autowired
+    private ModelMapper projectModelMapper;
+
+    @Autowired
     private ModelMapper modelMapper;
 
+
     public ProjectDTO convertProjectToDTO(Project project){
-        return modelMapper.map(project, ProjectDTO.class);
+        this.projectModelMapper.typeMap(Project.class, ProjectDTO.class).addMapping(Project::getAttributes, ProjectDTO::setAttrs);
+        return projectModelMapper.map(project, ProjectDTO.class);
     }
 
     public List<ProjectDTO> getDTOProjectsList(List<Project> projects){

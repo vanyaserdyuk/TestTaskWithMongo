@@ -10,7 +10,7 @@ import java.util.List;
 @Document(collection = "projects")
 @NoArgsConstructor
 @Builder
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class Project {
 
     @Id

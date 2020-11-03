@@ -31,7 +31,7 @@ public class ProjectDTOConverterTest {
     public void buildTestData(){
         project = Project.builder().id("a").name("prj").attributes(new ArrayList<Attribute>())
                 .geometries(new ArrayList<>()).build();
-        projectDTO = ProjectDTO.builder().id("a").name("prj").attributes(new ArrayList<AttrDTO>()).build();
+        projectDTO = ProjectDTO.builder().id("a").name("prj").attrs(new ArrayList<AttrDTO>()).build();
         createProjectDTO = new CreateProjectDTO("prj");
     }
 
@@ -47,8 +47,8 @@ public class ProjectDTOConverterTest {
         assertNotNull(resultProjectDTO);
         assertEquals(resultProjectDTO.getId(), projectDTO.getId());
         assertEquals(resultProjectDTO.getName(), projectDTO.getName());
-        while (i < projectDTO.getAttributes().size()){
-            assertEquals(projectDTO.getAttributes().get(i), resultProjectDTO.getAttributes().get(i));
+        while (i < projectDTO.getAttrs().size()){
+            assertEquals(projectDTO.getAttrs().get(i), resultProjectDTO.getAttrs().get(i));
             i++;
         }
     }
@@ -67,7 +67,7 @@ public class ProjectDTOConverterTest {
     public void getDTOProjectsListTest(){
         Project project1 = Project.builder().id("b").name("prj1").attributes(new ArrayList<Attribute>())
                 .geometries(new ArrayList<>()).build();
-        ProjectDTO projectDTO1 = ProjectDTO.builder().id("b").name("prj1").attributes(new ArrayList<AttrDTO>()).build();
+        ProjectDTO projectDTO1 = ProjectDTO.builder().id("b").name("prj1").attrs(new ArrayList<AttrDTO>()).build();
         List<Project> projects = new ArrayList<>();
         projects.add(project);
         projects.add(project1);

@@ -93,7 +93,7 @@ public class MainController {
         if (optionalProject.isPresent()){
             Project project = optionalProject.get();
             project.setName(projectDTO.getName());
-            project.setAttributes(projectDtoConverter.getAttrListFromDTO(projectDTO.getAttributes()));
+            project.setAttributes(projectDtoConverter.getAttrListFromDTO(projectDTO.getAttrs()));
             projectService.updateProject(project);
             return new ResponseEntity<>(project, HttpStatus.OK);
         }

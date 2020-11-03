@@ -12,5 +12,5 @@ import java.util.List;
 public class ProjectDTO {
     private String id;
     private String name;
-    private List<AttrDTO> attributes;
+    private List<AttrDTO> attrs;
 }
