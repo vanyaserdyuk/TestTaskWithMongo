@@ -60,7 +60,7 @@ public class MainController {
         if (projects.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-
+ 
         return new ResponseEntity<>(projects, HttpStatus.OK);
     }
 
