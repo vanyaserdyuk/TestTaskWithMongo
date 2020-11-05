@@ -1,6 +1,7 @@
 package ru.testtask.converter;
 
 import lombok.NoArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -10,6 +11,7 @@ import ru.testtask.dto.ProjectDTO;
 import ru.testtask.model.Attribute;
 import ru.testtask.model.Project;
 
+import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,15 +20,11 @@ import java.util.stream.Collectors;
 public class ProjectDTOConverter {
 
     @Autowired
-    private ModelMapper projectModelMapper;
-
-    @Autowired
     private ModelMapper modelMapper;
 
 
     public ProjectDTO convertProjectToDTO(Project project){
-        this.projectModelMapper.typeMap(Project.class, ProjectDTO.class).addMapping(Project::getAttributes, ProjectDTO::setAttrs);
-        return projectModelMapper.map(project, ProjectDTO.class);
+        return modelMapper.map(project, ProjectDTO.class);
     }
 
     public List<ProjectDTO> getDTOProjectsList(List<Project> projects){
@@ -37,7 +35,8 @@ public class ProjectDTOConverter {
         return modelMapper.map(createProjectDTO, Project.class);
     }
 
-    public List<Attribute> getAttrListFromDTO(List<AttrDTO> attrDTOS){
+    public List<Attribute> getAttrListFromDTO(@NotNull List<AttrDTO> attrDTOS){
         return attrDTOS.stream().map(attrDTO -> modelMapper.map(attrDTO, Attribute.class)).collect(Collectors.toList());
     }
+
 }

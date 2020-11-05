@@ -29,7 +29,7 @@ public class MainController {
         Optional<Project> project = projectService.findProjectById(id);
 
         if (project.isEmpty())
-            return new ResponseEntity<>("Project with ID " + id + " does not found", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(String.format("Project with ID %s does not found", id), HttpStatus.NOT_FOUND);
 
         return new ResponseEntity<>(projectDtoConverter.convertProjectToDTO(project.get()), HttpStatus.OK);
     }
@@ -39,7 +39,7 @@ public class MainController {
         Project project = projectService.findProjectByName(name);
 
         if (project == null)
-            return new ResponseEntity<>("Project with name " + name + " not found", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(String.format("Project with name %s does not found", name), HttpStatus.NOT_FOUND);
 
         return new ResponseEntity<>(projectDtoConverter.convertProjectToDTO(project), HttpStatus.OK);
     }
@@ -60,11 +60,12 @@ public class MainController {
     @GetMapping()
     public ResponseEntity<List<ProjectDTO>> getAllProjects() {
         List<Project> projects = projectService.findAllProjects();
-        List<ProjectDTO> dtos = projectDtoConverter.getDTOProjectsList(projects);
 
         if (projects.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+
+        List<ProjectDTO> dtos = projectDtoConverter.getDTOProjectsList(projects);
 
         return new ResponseEntity<>(dtos, HttpStatus.OK);
     }
