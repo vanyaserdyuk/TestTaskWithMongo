@@ -1,16 +1,15 @@
-package ru.testtask.model;
+package ru.testtask.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import lombok.NoArgsConstructor;
 
 @Builder
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
-public class Attribute {
+public class AttrDTO {
     private String id;
     private String name;
-
 }
