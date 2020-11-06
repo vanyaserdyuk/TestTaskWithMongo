@@ -71,7 +71,7 @@ public class ProjectDTOConverterTest {
     }
 
     @Test
-    public void convertDTOtoProjectTest(){
+    public void convertCreateProjectDTOtoProjectTest(){
         Project resultProject = projectDTOConverter.convertDTOtoProject(createProjectDTO);
         assertNotNull(resultProject);
         assertEquals(createProjectDTO.getName(), resultProject.getName());
@@ -113,8 +113,6 @@ public class ProjectDTOConverterTest {
     public void getAttrListFromDTOTest(){
         AttrDTO attrDTO = new AttrDTO("a", "attr");
         AttrDTO attrDTO1 = new AttrDTO("b", "attr1");
-        Attribute attribute = new Attribute("a", "attr");
-        Attribute attribute1 = new Attribute("b", "attr1");
         List<AttrDTO> attrDTOS = new ArrayList<>();
         attrDTOS.add(attrDTO);
         attrDTOS.add(attrDTO1);
@@ -122,10 +120,10 @@ public class ProjectDTOConverterTest {
         List<Attribute> testList = projectDTOConverter.getAttrListFromDTO(attrDTOS);
         assertEquals(2, testList.size());
 
-        assertEquals(attribute.getId(), testList.get(0).getId());
-        assertEquals(attribute.getName(), testList.get(0).getName());
-        assertEquals(attribute1.getId(), testList.get(1).getId());
-        assertEquals(attribute1.getName(), testList.get(1).getName());
+        assertEquals(attrDTO.getId(), testList.get(0).getId());
+        assertEquals(attrDTO.getName(), testList.get(0).getName());
+        assertEquals(attrDTO1.getId(), testList.get(1).getId());
+        assertEquals(attrDTO1.getName(), testList.get(1).getName());
     }
 
 
