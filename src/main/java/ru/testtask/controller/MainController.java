@@ -29,9 +29,6 @@ public class MainController {
     private ProjectService projectService;
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
     private ProjectDTOConverter projectDtoConverter;
 
     @GetMapping("/{id}")
@@ -92,7 +89,7 @@ public class MainController {
     public ResponseEntity<String> deleteProject(@PathVariable("id") String id) {
 
         if (projectService.findProjectById(id).isEmpty()) {
-            return new ResponseEntity<>("This project does not exist!", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(String.format("Project with ID %s does not found", id), HttpStatus.NOT_FOUND);
         }
 
         projectService.deleteProject(id);

@@ -42,15 +42,13 @@ public class ProjectService {
         if (findProjectByName(project.getName()).getId() != null){
             throw new NameAlreadyExistsException("Project with the same name already exists!");
         }
-
         else {
             for (int i = 0; i < 10; i++) {
                 project.addGeometry(Geometry.builder().name("geometry" + i).id(UUID.randomUUID().toString()).build());
                 project.addAttribute(Attribute.builder().name("geometry" + i).id(UUID.randomUUID().toString()).build());
             }
             project.setOwnerId(userService.getCurrentUserId());
-            projectRepo.insert(project);
-            return findProjectByName(project.getName());
+            return projectRepo.insert(project);
         }
     }
 

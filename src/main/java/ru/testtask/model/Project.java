@@ -12,6 +12,7 @@ import java.util.List;
 
 @Document(collection = "projects")
 @NoArgsConstructor
+@Builder
 public class Project {
 
     @Id
