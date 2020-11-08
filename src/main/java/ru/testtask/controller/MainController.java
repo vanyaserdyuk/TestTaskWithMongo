@@ -52,7 +52,7 @@ public class MainController {
     }
 
     @PostMapping()
-    public ResponseEntity<?> postProject(@RequestBody CreateProjectDTO createProjectDTO) {
+    public ResponseEntity<ProjectDTO> postProject(@RequestBody CreateProjectDTO createProjectDTO) {
         if (createProjectDTO.getName() == null){
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
@@ -64,8 +64,7 @@ public class MainController {
             return new ResponseEntity<>(projectDtoConverter.convertProjectToDTO(project), HttpStatus.CREATED);
         }
         catch(NameAlreadyExistsException e){
-            return new ResponseEntity<>("Project with the same name already exists!",
-                    HttpStatus.CONFLICT);
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
     }

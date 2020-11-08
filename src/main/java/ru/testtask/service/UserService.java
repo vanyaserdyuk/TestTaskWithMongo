@@ -8,10 +8,14 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import ru.testtask.exception.WrongMethodUseException;
+import ru.testtask.model.Role;
 import ru.testtask.model.User;
 import ru.testtask.repo.UserRepo;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -21,21 +25,21 @@ public class UserService implements UserDetailsService {
 
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException{
-            User user = userRepo.findByUsername(username);
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepo.findByUsername(username);
 
-            if (user == null) {
-                throw new UsernameNotFoundException(String.format("User with username %s does not exists", username));
-            }
+        if (user == null) {
+            throw new UsernameNotFoundException(String.format("User with username %s does not exists", username));
+        }
 
-            return user;
+        return user;
     }
 
-    public User getUserByUsername(String username){
+    public User getUserByUsername(String username) {
         return userRepo.findByUsername(username);
     }
 
-    public String getCurrentUserId() throws WrongMethodUseException{
+    public String getCurrentUserId() throws WrongMethodUseException {
 
         if (SecurityContextHolder.getContext().getAuthentication() == null)
             throw new WrongMethodUseException("Method can't be used from this thread.");
@@ -46,11 +50,28 @@ public class UserService implements UserDetailsService {
         }
     }
 
-    public Optional<User> getUserById(String id){
+    public Optional<User> getUserById(String id) {
         return userRepo.findById(id);
     }
 
-    public void updateUser(User user){
+    public void updateUser(User user) {
         userRepo.save(user);
     }
+
+    public void createDefaultUsers(){
+        User user = User.builder().username("user").password("user").roles(Collections.singleton(Role.USER)).build();
+        try{
+            loadUserByUsername(user.getUsername());
+        } catch (UsernameNotFoundException e){
+            userRepo.insert(user);
+        }
+
+        User admin = User.builder().username("admin").password("admin").roles(Collections.singleton(Role.ADMIN)).build();
+        try{
+            loadUserByUsername(admin.getUsername());
+        } catch (UsernameNotFoundException e){
+            userRepo.insert(admin);
+        }
+    }
+
 }

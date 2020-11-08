@@ -1,11 +1,15 @@
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.junit4.SpringRunner;
+import ru.testtask.exception.NameAlreadyExistsException;
 import ru.testtask.model.Attribute;
 import ru.testtask.model.Geometry;
 import ru.testtask.model.Project;
+import ru.testtask.repo.ProjectRepo;
 import ru.testtask.service.ProjectService;
 import java.util.List;
 
@@ -18,6 +22,9 @@ public class ProjectServiceTest {
     private static ProjectService projectService;
 
     private static Project testProject;
+
+    @Mock
+    private static ProjectRepo projectRepo;
 
     @Before
     public void buildTestProject(){
@@ -48,10 +55,9 @@ public class ProjectServiceTest {
         }
     }
 
-    @Test
+    @Test(expected = NameAlreadyExistsException.class)
     public void checkSimilarNamesCreationTest(){
         Project resultProject = projectService.createProject(testProject);
         Project resultProject2 = projectService.createProject(testProject);
-        assertNotEquals(resultProject2, resultProject);
     }
 }

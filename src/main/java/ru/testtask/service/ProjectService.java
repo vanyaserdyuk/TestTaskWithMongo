@@ -33,16 +33,15 @@ public class ProjectService {
         return projectRepo.findById(id);
     }
 
-    public Project findProjectByName(String name){
+    public Project findProjectByName(String name) {
         return projectRepo.findByName(name);
     }
 
 
     public Project createProject(Project project) throws NameAlreadyExistsException {
-        if (findProjectByName(project.getName()).getId() != null){
+        if (findProjectByName(project.getName()).getId() != null) {
             throw new NameAlreadyExistsException("Project with the same name already exists!");
-        }
-        else {
+        } else {
             for (int i = 0; i < 10; i++) {
                 project.addGeometry(Geometry.builder().name("geometry" + i).id(UUID.randomUUID().toString()).build());
                 project.addAttribute(Attribute.builder().name("geometry" + i).id(UUID.randomUUID().toString()).build());
@@ -67,17 +66,16 @@ public class ProjectService {
         return projectRepo.findAll();
     }
 
-    public boolean isCurrentUserOwnerOf(String id){
+    public boolean isCurrentUserOwnerOf(String id) {
         Project project;
 
-            Optional<Project> optionalProject = findProjectById(id);
+        Optional<Project> optionalProject = findProjectById(id);
 
-            if (optionalProject.isPresent()){
-                project = optionalProject.get();
-            }
-            else return false;
+        if (optionalProject.isPresent()) {
+            project = optionalProject.get();
+        } else return false;
 
-           return Objects.equals(userService.getCurrentUserId(), project.getOwnerId());
+        return Objects.equals(userService.getCurrentUserId(), project.getOwnerId());
     }
 
 
