@@ -1,21 +1,28 @@
 package ru.testtask.controller;
 
+import com.sun.istack.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.testtask.converter.ProjectDTOConverter;
 import ru.testtask.dto.CreateProjectDTO;
 import ru.testtask.dto.ProjectDTO;
+import ru.testtask.exception.NameAlreadyExistsException;
 import ru.testtask.model.Project;
+import ru.testtask.model.User;
+import ru.testtask.model.Role;
 import ru.testtask.service.ProjectService;
+import ru.testtask.service.UserService;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @RestController
-@RequestMapping(value = "/api/projects", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping("/api/projects")
 public class MainController {
 
     @Autowired
@@ -49,13 +56,18 @@ public class MainController {
         if (createProjectDTO.getName() == null){
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
+
         Project project = projectDtoConverter.convertDTOtoProject(createProjectDTO);
 
-        projectService.createProject(project);
-        return new ResponseEntity<>(projectDtoConverter.convertProjectToDTO(project)
-                ,HttpStatus.CREATED);
-    }
+        try {
+            projectService.createProject(project);
+            return new ResponseEntity<>(projectDtoConverter.convertProjectToDTO(project), HttpStatus.CREATED);
+        }
+        catch(NameAlreadyExistsException e){
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
 
+    }
 
     @GetMapping()
     public ResponseEntity<List<ProjectDTO>> getAllProjects() {
@@ -70,6 +82,7 @@ public class MainController {
         return new ResponseEntity<>(dtos, HttpStatus.OK);
     }
 
+    @PreAuthorize("projectService.isCurrentUserOwnerOf(#id) or hasAuthority('MODERATOR')")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteProject(@PathVariable("id") String id) {
 
@@ -82,9 +95,9 @@ public class MainController {
         return new ResponseEntity<>(String.format("Project with ID %s removed successfully", id), HttpStatus.NO_CONTENT);
     }
 
+    @PreAuthorize("projectService.isCurrentUserOwnerOf(#id) or hasAuthority('MODERATOR')")
     @PutMapping("/{id}")
-    public ResponseEntity<Project> updateProject(@PathVariable("id") String id,
-                                                 @RequestBody ProjectDTO projectDTO) {
+    public ResponseEntity<Project> updateProject(@PathVariable("id") String id, @RequestBody ProjectDTO projectDTO) {
         if (!projectDTO.getId().equals(id)){
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
@@ -101,4 +114,9 @@ public class MainController {
 
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
+
 }
+
+
+
+

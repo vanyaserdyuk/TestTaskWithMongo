@@ -1,7 +1,9 @@
 package ru.testtask.model;
 
+
 import lombok.*;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.mapping.Document;
 import javax.persistence.Id;
 import java.util.ArrayList;
@@ -23,8 +25,14 @@ public class Project {
 
     @Getter
     @Setter
+    private String ownerId;
+
+    @Getter
+    @Setter
+    @NotNull
     private List<Attribute> attributes = new ArrayList<>();
     @Getter
+    @Setter
     @NotNull
     private List<Geometry> geometries = new ArrayList<>();
 

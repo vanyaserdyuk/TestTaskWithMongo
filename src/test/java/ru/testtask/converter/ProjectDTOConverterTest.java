@@ -27,14 +27,14 @@ import static org.junit.Assert.*;
 @RunWith(SpringRunner.class)
 public class ProjectDTOConverterTest {
     @Autowired
-    private static ProjectDTOConverter projectDTOConverter;
+    private ProjectDTOConverter projectDTOConverter;
 
     @Autowired
-    private static DTOConverterConfig modelMapper;
+    private DTOConverterConfig modelMapper;
 
-    private static Project project;
-    private static ProjectDTO projectDTO;
-    private static CreateProjectDTO createProjectDTO;
+    private Project project;
+    private ProjectDTO projectDTO;
+    private CreateProjectDTO createProjectDTO;
 
     @Before
     public void buildTestData(){
@@ -49,11 +49,6 @@ public class ProjectDTOConverterTest {
                 .geometries(new ArrayList<>()).build();
         projectDTO = ProjectDTO.builder().id("a").name("prj").attrs(attrDTOS).build();
         createProjectDTO = new CreateProjectDTO("prj");
-    }
-
-    @Before
-    public void initConverter(){
-        projectDTOConverter = new ProjectDTOConverter();
     }
 
     @Test
