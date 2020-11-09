@@ -6,19 +6,21 @@
 </head>
 
 <body>
-<script>
-    function getProjectByName() {
-        $.ajax({
-            url: "/api/projects/name/{name}",
-            type: "GET",
-            success: function (data) {
-                console.log("GET DATA API RESPONSE - ID::"+data.id);
-                console.log("GET DATA API RESPONSE - NAME::"+data.name);
-            }, error: function (jqXHR, textStatus, errorThrown) {
-            }
-        });
-    }
-</script>
+<div class="form-group">
+    <label for="projectName">Project Name:</label> <input type="text"
+                                                    class="form-control" id="projectName" placeholder="Enter Project Name"
+                                                    name="projectName">
+</div>
+<button type="submit" class="btn btn-primary">Post a project</button>
+<div class="col-sm-7" style="margin: 20px 0px 20px 0px">
+    <button id="getALlBooks" type="button" class="btn btn-primary">Get
+        All Projects</button>
+    <div id="getResultDiv" style="padding: 20px 10px 20px 50px">
+        <ul class="list-group">
+        </ul>
+    </div>
+</div>
+
 
 
 </body>

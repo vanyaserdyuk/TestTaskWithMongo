@@ -78,9 +78,9 @@ public class UserService implements UserDetailsService {
     }
 
     public void createDefaultUser(String username, String password, Set<Role> roles) {
-        User user = User.builder().username(username).password(password).roles(roles).build();
-        if (getUserByUsername(user.getUsername()) == null) {
+        if (getUserByUsername(username) == null) {
             try {
+                User user = User.builder().username(username).password(password).roles(roles).build();
                 userRepo.insert(user);
             } catch (MongoWriteException e) {
                 log.error("Impossible to write this user to a database");
