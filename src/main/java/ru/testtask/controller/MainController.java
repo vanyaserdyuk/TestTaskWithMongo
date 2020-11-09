@@ -42,7 +42,6 @@ public class MainController {
     }
 
     @GetMapping("/name/{name}")
-    @ResponseBody
     public ResponseEntity<?> getProjectByName(@PathVariable ("name") String name) {
         Project project = projectService.findProjectByName(name);
 
@@ -70,7 +69,6 @@ public class MainController {
 
     }
 
-
     @GetMapping()
     public ResponseEntity<List<ProjectDTO>> getAllProjects() {
         List<Project> projects = projectService.findAllProjects();
@@ -84,18 +82,18 @@ public class MainController {
         return new ResponseEntity<>(dtos, HttpStatus.OK);
     }
 
-//    @PreAuthorize("projectService.isCurrentUserOwnerOf(#id) or hasAuthority('MODERATOR')")
-//    @DeleteMapping("/{id}")
-//    public ResponseEntity<String> deleteProject(@PathVariable("id") String id) {
-//
-//        if (projectService.findProjectById(id).isEmpty()) {
-//            return new ResponseEntity<>(String.format("Project with ID %s does not found", id), HttpStatus.NOT_FOUND);
-//        }
-//
-//        projectService.deleteProject(id);
-//
-//        return new ResponseEntity<>(String.format("Project with ID %s removed successfully", id), HttpStatus.NO_CONTENT);
-//    }
+    @PreAuthorize("projectService.isCurrentUserOwnerOf(#id) or hasAuthority('MODERATOR')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteProject(@PathVariable("id") String id) {
+
+        if (projectService.findProjectById(id).isEmpty()) {
+            return new ResponseEntity<>(String.format("Project with ID %s does not found", id), HttpStatus.NOT_FOUND);
+        }
+
+        projectService.deleteProject(id);
+
+        return new ResponseEntity<>(String.format("Project with ID %s removed successfully", id), HttpStatus.NO_CONTENT);
+    }
 
     @PreAuthorize("projectService.isCurrentUserOwnerOf(#id) or hasAuthority('MODERATOR')")
     @PutMapping("/{id}")
