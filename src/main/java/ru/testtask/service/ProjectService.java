@@ -1,12 +1,8 @@
 package ru.testtask.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-
 import ru.testtask.exception.NameAlreadyExistsException;
-import ru.testtask.exception.WrongMethodUseException;
 import ru.testtask.model.Attribute;
 import ru.testtask.model.Geometry;
 import ru.testtask.model.Project;
@@ -39,7 +35,7 @@ public class ProjectService {
 
 
     public Project createProject(Project project) throws NameAlreadyExistsException {
-        if (findProjectByName(project.getName()).getId() != null) {
+        if (findProjectByName(project.getName()) != null) {
             throw new NameAlreadyExistsException("Project with the same name already exists!");
         } else {
             for (int i = 0; i < 10; i++) {

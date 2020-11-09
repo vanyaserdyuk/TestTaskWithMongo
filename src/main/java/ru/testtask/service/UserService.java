@@ -1,7 +1,11 @@
 package ru.testtask.service;
 
-import lombok.SneakyThrows;
+import com.mongodb.MongoWriteException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -12,17 +16,27 @@ import ru.testtask.model.Role;
 import ru.testtask.model.User;
 import ru.testtask.repo.UserRepo;
 
+import javax.annotation.PostConstruct;
+
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
 @Service
+@Slf4j
 public class UserService implements UserDetailsService {
 
     @Autowired
     private UserRepo userRepo;
 
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
+    @PostConstruct
+    public void init(){
+        mongoTemplate.indexOps("users").ensureIndex(new Index("username", Sort.Direction.ASC).unique());
+        createDefaultUsers();
+    }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -59,18 +73,18 @@ public class UserService implements UserDetailsService {
     }
 
     public void createDefaultUsers(){
-        User user = User.builder().username("user").password("user").roles(Collections.singleton(Role.USER)).build();
-        try{
-            loadUserByUsername(user.getUsername());
-        } catch (UsernameNotFoundException e){
-            userRepo.insert(user);
-        }
+        createDefaultUser("user", "user", Collections.singleton(Role.USER));
+        createDefaultUser("admin", "admin", Collections.singleton(Role.ADMIN));
+    }
 
-        User admin = User.builder().username("admin").password("admin").roles(Collections.singleton(Role.ADMIN)).build();
-        try{
-            loadUserByUsername(admin.getUsername());
-        } catch (UsernameNotFoundException e){
-            userRepo.insert(admin);
+    public void createDefaultUser(String username, String password, Set<Role> roles) {
+        User user = User.builder().username(username).password(password).roles(roles).build();
+        if (getUserByUsername(user.getUsername()) == null) {
+            try {
+                userRepo.insert(user);
+            } catch (MongoWriteException e) {
+                log.error("Impossible to write this user to a database");
+            }
         }
     }
 
