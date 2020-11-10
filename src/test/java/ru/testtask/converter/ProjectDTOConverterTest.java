@@ -32,9 +32,6 @@ public class ProjectDTOConverterTest {
     @Autowired
     private ProjectDTOConverter projectDTOConverter;
 
-    @Mock
-    private UserService userService;
-
     @Autowired
     private DTOConverterConfig modelMapper;
 
