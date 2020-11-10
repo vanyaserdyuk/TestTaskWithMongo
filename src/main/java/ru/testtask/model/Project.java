@@ -17,6 +17,7 @@ public class Project {
 
     @Id
     @Getter
+    @Setter
     private String id;
 
     @Setter

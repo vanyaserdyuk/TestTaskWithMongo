@@ -1,43 +1,54 @@
+package ru.testtask.service;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
+import ru.testtask.Application;
 import ru.testtask.exception.NameAlreadyExistsException;
+import ru.testtask.exception.WrongMethodUseException;
 import ru.testtask.model.Attribute;
 import ru.testtask.model.Geometry;
 import ru.testtask.model.Project;
 import ru.testtask.repo.ProjectRepo;
 import ru.testtask.service.ProjectService;
+import ru.testtask.service.UserService;
+
 import java.util.List;
 
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 
 
 @RunWith(SpringRunner.class)
+@SpringBootTest(classes = {Application.class})
 public class ProjectServiceTest {
 
-    private static ProjectService projectService;
+    @Autowired
+    private ProjectService projectService;
 
-    private static Project testProject;
+    @MockBean
+    private UserService userService;
 
-    @Mock
-    private static ProjectRepo projectRepo;
+    private Project testProject;
+
+    @Autowired
+    private ProjectRepo projectRepo;
 
     @Before
     public void buildTestProject(){
         testProject = new Project();
-        testProject.setName("Test");
+        testProject.setName("TestProject");
     }
 
-    @Before
-    public void initService(){
-         projectService = new ProjectService();
-    }
-
-    @Test
+    @Test()
     public void createTest(){
         Project resultProject = projectService.createProject(testProject);
         assertNotNull(resultProject);
@@ -57,6 +68,7 @@ public class ProjectServiceTest {
 
     @Test(expected = NameAlreadyExistsException.class)
     public void checkSimilarNamesCreationTest(){
+
         Project resultProject = projectService.createProject(testProject);
         Project resultProject2 = projectService.createProject(testProject);
     }
