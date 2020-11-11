@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import ru.testtask.exception.NameAlreadyExistsException;
 import ru.testtask.exception.WrongMethodUseException;
 import ru.testtask.model.Role;
 import ru.testtask.model.User;
@@ -17,6 +18,7 @@ import ru.testtask.repo.UserRepo;
 
 import javax.annotation.PostConstruct;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -87,6 +89,22 @@ public class UserService implements UserDetailsService {
                 log.error("Impossible to write this user to a database");
             }
         }
+    }
+
+    public User createUser(User user){
+        if (getUserByUsername(user.getUsername()) != null) {
+            throw new NameAlreadyExistsException("User with the same name already exists!");
+        } else {
+            return userRepo.insert(user);
+        }
+    }
+
+    public List<User> getAllUsers(){
+        return userRepo.findAll();
+    }
+
+    public void deleteUser(String id){
+        userRepo.deleteById(id);
     }
 
 }

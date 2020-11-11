@@ -11,6 +11,7 @@ import java.util.Set;
 @NoArgsConstructor
 public class UserDTO {
     private String name;
+    private String password;
     @JsonDeserialize(as = Set.class)
     private Set<Role> roles;
 }
