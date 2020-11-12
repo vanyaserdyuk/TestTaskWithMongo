@@ -1,6 +1,5 @@
 package ru.testtask.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.testtask.exception.NameAlreadyExistsException;
 import ru.testtask.model.Attribute;

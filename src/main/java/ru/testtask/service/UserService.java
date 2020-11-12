@@ -16,7 +16,6 @@ import ru.testtask.model.User;
 import ru.testtask.repo.UserRepo;
 
 import javax.annotation.PostConstruct;
-
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
@@ -24,9 +23,15 @@ import java.util.Set;
 @Service
 @Slf4j
 public class UserService implements UserDetailsService {
-    private UserRepo userRepo;
 
-    private MongoTemplate mongoTemplate;
+    private final UserRepo userRepo;
+
+    private final MongoTemplate mongoTemplate;
+
+    public UserService(UserRepo userRepo, MongoTemplate mongoTemplate) {
+        this.userRepo = userRepo;
+        this.mongoTemplate = mongoTemplate;
+    }
 
     @PostConstruct
     public void init(){
