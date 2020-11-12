@@ -1,5 +1,6 @@
 package ru.testtask.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,9 +19,14 @@ import java.util.Optional;
 @RequestMapping("/api/projects")
 public class MainController {
 
-    public ProjectService projectService;
+    private final ProjectService projectService;
 
-    private ProjectDTOConverter projectDtoConverter;
+    private final ProjectDTOConverter projectDtoConverter;
+
+    public MainController(ProjectService projectService, ProjectDTOConverter projectDtoConverter) {
+        this.projectService = projectService;
+        this.projectDtoConverter = projectDtoConverter;
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getProjectById(@PathVariable("id") String id) {

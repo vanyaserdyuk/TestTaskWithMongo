@@ -1,5 +1,6 @@
 package ru.testtask.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.testtask.exception.NameAlreadyExistsException;
 import ru.testtask.model.Attribute;
@@ -15,11 +16,13 @@ import java.util.UUID;
 @Component
 public class ProjectService {
 
-    private ProjectRepo projectRepo;
+    private final ProjectRepo projectRepo;
 
-    private UserService userService;
+    private final UserService userService;
 
-    public ProjectService() {
+    public ProjectService(ProjectRepo projectRepo, UserService userService) {
+        this.projectRepo = projectRepo;
+        this.userService = userService;
     }
 
 
