@@ -3,6 +3,7 @@ package ru.testtask.converter;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -16,6 +17,7 @@ import ru.testtask.dto.CreateProjectDTO;
 import ru.testtask.dto.ProjectDTO;
 import ru.testtask.model.Attribute;
 import ru.testtask.model.Project;
+import ru.testtask.service.UserService;
 
 
 import java.util.ArrayList;
@@ -25,6 +27,7 @@ import static org.junit.Assert.*;
 
 
 @RunWith(SpringRunner.class)
+@SpringBootTest(classes = {Application.class})
 public class ProjectDTOConverterTest {
     @Autowired
     private ProjectDTOConverter projectDTOConverter;
@@ -70,9 +73,6 @@ public class ProjectDTOConverterTest {
         Project resultProject = projectDTOConverter.convertDTOtoProject(createProjectDTO);
         assertNotNull(resultProject);
         assertEquals(createProjectDTO.getName(), resultProject.getName());
-        assertNotNull(resultProject.getId());
-        assertNotNull(resultProject.getGeometries());
-        assertNotNull(resultProject.getAttributes());
     }
 
     @Test
@@ -94,7 +94,7 @@ public class ProjectDTOConverterTest {
         assertEquals(projects.get(0).getId(), testList.get(0).getId());
         assertEquals(projects.get(0).getName(), testList.get(0).getName());
         assertEquals(projects.get(1).getId(), testList.get(1).getId());
-        assertEquals(projects.get(1).getName(), testList.get(0).getName());
+        assertEquals(projects.get(1).getName(), testList.get(1).getName());
 
         for (int i = 0; i < project.getAttributes().size(); i++) {
             assertEquals(project.getAttributes().get(i).getId(), testList.get(0).getAttrs().get(i).getId());

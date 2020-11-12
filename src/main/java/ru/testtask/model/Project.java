@@ -13,34 +13,23 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @AllArgsConstructor
+@Data
 public class Project {
 
     @Id
-    @Getter
     private String id;
-
-    @Setter
-    @Getter
     private String name;
-
-    @Getter
-    @Setter
     private String ownerId;
 
-    @Getter
-    @Setter
     @NotNull
     private List<Attribute> attributes = new ArrayList<>();
-    @Getter
-    @Setter
+
     @NotNull
     private List<Geometry> geometries = new ArrayList<>();
-
 
     public void addGeometry(Geometry geometry){
         this.geometries.add(geometry);
     }
-
     public void addAttribute(Attribute attribute){
         this.attributes.add(attribute);
     }
