@@ -1,7 +1,5 @@
 package ru.testtask.controller;
 
-import com.sun.istack.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -11,24 +9,17 @@ import ru.testtask.dto.CreateProjectDTO;
 import ru.testtask.dto.ProjectDTO;
 import ru.testtask.exception.NameAlreadyExistsException;
 import ru.testtask.model.Project;
-import ru.testtask.model.User;
-import ru.testtask.model.Role;
 import ru.testtask.service.ProjectService;
-import ru.testtask.service.UserService;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @RestController
 @RequestMapping("/api/projects")
 public class MainController {
 
-    @Autowired
-    private ProjectService projectService;
+    public ProjectService projectService;
 
-    @Autowired
     private ProjectDTOConverter projectDtoConverter;
 
     @GetMapping("/{id}")
@@ -53,7 +44,7 @@ public class MainController {
 
     @PostMapping()
     public ResponseEntity<ProjectDTO> postProject(@RequestBody CreateProjectDTO createProjectDTO) {
-        if (createProjectDTO.getName() == null){
+        if (createProjectDTO.getName().isEmpty()){
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 

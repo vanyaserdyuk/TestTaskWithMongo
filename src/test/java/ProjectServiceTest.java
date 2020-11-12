@@ -1,19 +1,17 @@
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.junit4.SpringRunner;
 import ru.testtask.exception.NameAlreadyExistsException;
 import ru.testtask.model.Attribute;
 import ru.testtask.model.Geometry;
 import ru.testtask.model.Project;
-import ru.testtask.repo.ProjectRepo;
 import ru.testtask.service.ProjectService;
+
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 
 @RunWith(SpringRunner.class)
@@ -22,9 +20,6 @@ public class ProjectServiceTest {
     private static ProjectService projectService;
 
     private static Project testProject;
-
-    @Mock
-    private static ProjectRepo projectRepo;
 
     @Before
     public void buildTestProject(){

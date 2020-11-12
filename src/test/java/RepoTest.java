@@ -1,5 +1,3 @@
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.internal.MongoClientImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -9,10 +7,11 @@ import ru.testtask.model.Attribute;
 import ru.testtask.model.Geometry;
 import ru.testtask.model.Project;
 import ru.testtask.repo.ProjectRepo;
+
 import java.util.Optional;
 import java.util.UUID;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+
+import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
 @DataMongoTest
@@ -48,7 +47,12 @@ public class RepoTest {
     @Test
     public void checkFindingById(){
         Optional<Project> optional = projectRepo.findById(project.getId());
-        Project prj = optional.get();
-        assertEquals(prj.getId(), project.getId());
+        if (optional.isPresent()) {
+            Project prj = optional.get();
+            assertEquals(prj.getId(), project.getId());
+        }
+        else{
+            fail();
+        }
     }
 }
