@@ -72,5 +72,9 @@ public class ProjectService {
         return Objects.equals(userService.getCurrentUserId(), project.getOwnerId());
     }
 
+    public void deleteAllProjects(){
+        projectRepo.deleteAll();
+    }
+
 
 }
