@@ -10,8 +10,8 @@ import org.springframework.context.annotation.PropertySources;
 
 
 @PropertySources({
-        @PropertySource(value = "classpath:application.properties"),
-        @PropertySource(value = "classpath:application-local.properties", ignoreResourceNotFound = true)
+        @PropertySource(value = "classpath:foo.properties"),
+        @PropertySource(value = "classpath:boo.properties", ignoreResourceNotFound = true)
 })
 @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
 @EnableAspectJAutoProxy
