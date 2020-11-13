@@ -2,7 +2,6 @@ package ru.testtask.service;
 
 import com.mongodb.MongoWriteException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
@@ -17,7 +16,6 @@ import ru.testtask.model.User;
 import ru.testtask.repo.UserRepo;
 
 import javax.annotation.PostConstruct;
-
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
@@ -26,11 +24,14 @@ import java.util.Set;
 @Slf4j
 public class UserService implements UserDetailsService {
 
-    @Autowired
-    private UserRepo userRepo;
+    private final UserRepo userRepo;
 
-    @Autowired
-    private MongoTemplate mongoTemplate;
+    private final MongoTemplate mongoTemplate;
+
+    public UserService(UserRepo userRepo, MongoTemplate mongoTemplate) {
+        this.userRepo = userRepo;
+        this.mongoTemplate = mongoTemplate;
+    }
 
     @PostConstruct
     public void init(){

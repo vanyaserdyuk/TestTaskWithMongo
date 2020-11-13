@@ -66,8 +66,8 @@ public class ProjectServiceTest {
 
     @Test(expected = NameAlreadyExistsException.class)
     public void checkSimilarNamesCreationTest(){
-        Project resultProject = projectService.createProject(testProject);
-        Project resultProject2 = projectService.createProject(testProject);
+        projectService.createProject(testProject);
+        projectService.createProject(testProject);
     }
 
     @Test

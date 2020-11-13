@@ -1,24 +1,17 @@
 package ru.testtask.repo;
 
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.internal.MongoClientImpl;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo;
-import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import ru.testtask.Application;
 import ru.testtask.model.Attribute;
 import ru.testtask.model.Geometry;
 import ru.testtask.model.Project;
-import ru.testtask.repo.ProjectRepo;
+
 import java.util.Optional;
 import java.util.UUID;
 
@@ -63,8 +56,13 @@ public class RepoTest {
     @Test
     public void checkFindingById(){
         Optional<Project> optional = projectRepo.findById(project.getId());
-        Project prj = optional.get();
-        assertEquals(prj.getId(), project.getId());
+        if (optional.isPresent()) {
+            Project prj = optional.get();
+            assertEquals(prj.getId(), project.getId());
+        }
+        else{
+            fail();
+        }
     }
 
     @Test
