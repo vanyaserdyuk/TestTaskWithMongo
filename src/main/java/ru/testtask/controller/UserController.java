@@ -46,7 +46,7 @@ public class UserController {
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping("/{id}")
-    public ResponseEntity<?> getProjectById(@PathVariable("id") String id) {
+    public ResponseEntity<?> getUserById(@PathVariable("id") String id) {
         Optional<User> optionalUser = userService.getUserById(id);
 
         if (optionalUser.isEmpty())
@@ -57,7 +57,7 @@ public class UserController {
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping("/name/{name}")
-    public ResponseEntity<?> getProjectByName(@PathVariable ("name") String name) {
+    public ResponseEntity<?> getUserByUsername(@PathVariable ("name") String name) {
         User user = userService.getUserByUsername(name);
 
         if (user == null)
@@ -68,16 +68,15 @@ public class UserController {
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping()
-    public ResponseEntity<UserDTO> postProject(@RequestBody UserDTO clientUser) {
-        if (clientUser.getName() == null){
+    public ResponseEntity<UserDTO> postUser(@RequestBody UserDTO clientUser) {
+        if (clientUser.getUsername() == null){
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
         User user = modelMapper.map(clientUser, User.class);
 
         try {
-            userService.createUser(user);
-            return new ResponseEntity<UserDTO>(modelMapper.map(user, UserDTO.class), HttpStatus.CREATED);
+            return new ResponseEntity<UserDTO>(modelMapper.map(userService.createUser(user), UserDTO.class), HttpStatus.CREATED);
         }
         catch(NameAlreadyExistsException e){
             return new ResponseEntity<>(HttpStatus.CONFLICT);

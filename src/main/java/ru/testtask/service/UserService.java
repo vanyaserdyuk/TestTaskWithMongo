@@ -10,6 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import ru.testtask.exception.NameAlreadyExistsException;
 import ru.testtask.exception.WrongMethodUseException;
@@ -33,6 +34,9 @@ public class UserService implements UserDetailsService {
 
     @Autowired
     private MongoTemplate mongoTemplate;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @PostConstruct
     public void init(){
@@ -75,8 +79,8 @@ public class UserService implements UserDetailsService {
     }
 
     public void createDefaultUsers(){
-        createDefaultUser("user", "user", Collections.singleton(Role.USER));
-        createDefaultUser("admin", "admin", Collections.singleton(Role.ADMIN));
+        createDefaultUser("user", "$2y$12$/wwVf0mDfYo4IRIT2jd0a.ks4wu/f7Np/NrGZJ6rxXUjG5UOs.Lb2", Collections.singleton(Role.USER));
+        createDefaultUser("admin", "$2y$12$crhTzs9LTds5.3o1M.XaJO2wb6F4EnGa3GySy0odYcsdon8X.q3ye", Collections.singleton(Role.ADMIN));
     }
 
     public void createDefaultUser(String username, String password, Set<Role> roles) {
@@ -94,6 +98,7 @@ public class UserService implements UserDetailsService {
         if (getUserByUsername(user.getUsername()) != null) {
             throw new NameAlreadyExistsException("User with the same name already exists!");
         } else {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
             return userRepo.insert(user);
         }
     }
