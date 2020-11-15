@@ -59,6 +59,9 @@ public class ProjectDTOConverterTest {
         Project resultProject = projectDTOConverter.convertDTOtoProject(createProjectDTO);
         assertNotNull(resultProject);
         assertEquals(createProjectDTO.getName(), resultProject.getName());
+        assertNotNull(resultProject.getId());
+        assertNotNull(resultProject.getGeometries());
+        assertNotNull(resultProject.getAttributes());
     }
 
     @Test
@@ -80,7 +83,7 @@ public class ProjectDTOConverterTest {
         assertEquals(projects.get(0).getId(), testList.get(0).getId());
         assertEquals(projects.get(0).getName(), testList.get(0).getName());
         assertEquals(projects.get(1).getId(), testList.get(1).getId());
-        assertEquals(projects.get(1).getName(), testList.get(1).getName());
+        assertEquals(projects.get(1).getName(), testList.get(0).getName());
 
         for (int i = 0; i < project.getAttributes().size(); i++) {
             assertEquals(project.getAttributes().get(i).getId(), testList.get(0).getAttrs().get(i).getId());
