@@ -42,6 +42,9 @@ public class UserService implements UserDetailsService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @PostConstruct
     public void init(){
         mongoTemplate.indexOps("users").ensureIndex(new Index("username", Sort.Direction.ASC).unique());
