@@ -2,11 +2,15 @@ package ru.testtask.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
@@ -22,10 +26,11 @@ import java.util.Collections;
 import java.util.Optional;
 
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest
+@RunWith(SpringRunner.class)
+@SpringBootTest
+@AutoConfigureMockMvc
 public class UserControllerTest {
 
     @Autowired
@@ -66,10 +71,11 @@ public class UserControllerTest {
         Mockito.when(userService.getUserById(Mockito.anyString())).thenReturn(Optional.of(user));
         mockMvc.perform(
                 MockMvcRequestBuilders.
-                        get("/api/projects/a"))
+                        get("/api/users/a"))
                 .andExpect(status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.id").value("a"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.name").value("user"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.username").value("user"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.roles").value("USER"));
     }
 
     @Test
@@ -83,7 +89,7 @@ public class UserControllerTest {
 
     @Test
     public void putUserTest() throws Exception {
-        User user = User.builder().id("a").username("user").build();
+        User user = User.builder().id("a").username("user").roles(Collections.singleton(Role.USER)).build();
         String name = "user";
 
         Mockito.when(userService.getUserById(Mockito.anyString())).thenReturn(Optional.of(user));
@@ -93,7 +99,8 @@ public class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.id").value("a"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.name").value("user"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.name").value("user"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.roles").value("USER"));
     }
 
     @Test

@@ -5,17 +5,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import ru.testtask.converter.DTOConverterConfig;
-import ru.testtask.dto.CreateProjectDTO;
-import ru.testtask.dto.ProjectDTO;
 import ru.testtask.dto.UserDTO;
+import ru.testtask.dto.ViewUserDTO;
 import ru.testtask.exception.NameAlreadyExistsException;
-import ru.testtask.model.Project;
 import ru.testtask.model.User;
 import ru.testtask.service.UserService;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,6 +34,8 @@ public class UserController {
         if (optionalUser.isPresent()){
             User user = optionalUser.get();
             user.setRoles(clientUser.getRoles());
+            user.setUsername(clientUser.getUsername());
+            user.setPassword(clientUser.getPassword());
             userService.updateUser(user);
             return new ResponseEntity<>(user, HttpStatus.OK);
         }
@@ -52,7 +51,7 @@ public class UserController {
         if (optionalUser.isEmpty())
             return new ResponseEntity<>(String.format("User with ID %s does not found", id), HttpStatus.NOT_FOUND);
 
-        return new ResponseEntity<>(optionalUser.get(), HttpStatus.OK);
+        return new ResponseEntity<>(modelMapper.map(optionalUser.get(), ViewUserDTO.class), HttpStatus.OK);
     }
 
     @PreAuthorize("hasAuthority('ADMIN')")
@@ -61,9 +60,9 @@ public class UserController {
         User user = userService.getUserByUsername(name);
 
         if (user == null)
-            return new ResponseEntity<>(String.format("Project with name %s does not found", name), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(String.format("User with name %s does not found", name), HttpStatus.NOT_FOUND);
 
-        return new ResponseEntity<>(user, HttpStatus.OK);
+        return new ResponseEntity<>(modelMapper.map(user, ViewUserDTO.class), HttpStatus.OK);
     }
 
     @PreAuthorize("hasAuthority('ADMIN')")
@@ -86,14 +85,19 @@ public class UserController {
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping()
-    public ResponseEntity<List<User>> getAllUsers() {
+    public ResponseEntity<List<ViewUserDTO>> getAllUsers() {
         List<User> users = userService.getAllUsers();
+        List<ViewUserDTO> viewUserDTOS = new ArrayList<>();
+
+        for (User user : users) {
+            viewUserDTOS.add(modelMapper.map(user, ViewUserDTO.class));
+        }
 
         if (users.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        return new ResponseEntity<>(users, HttpStatus.OK);
+        return new ResponseEntity<>(viewUserDTOS, HttpStatus.OK);
     }
 
     @PreAuthorize("hasAuthority('ADMIN')")

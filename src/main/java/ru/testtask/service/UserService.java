@@ -1,5 +1,7 @@
 package ru.testtask.service;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.MongoWriteException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort;
@@ -39,8 +41,12 @@ public class UserService implements UserDetailsService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @PostConstruct
     public void init(){
+        objectMapper.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
         mongoTemplate.indexOps("users").ensureIndex(new Index("username", Sort.Direction.ASC).unique());
         createDefaultUsers();
     }
@@ -76,18 +82,19 @@ public class UserService implements UserDetailsService {
     }
 
     public void updateUser(User user) {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         userRepo.save(user);
     }
 
     public void createDefaultUsers(){
-        createDefaultUser("user", "$2y$12$/wwVf0mDfYo4IRIT2jd0a.ks4wu/f7Np/NrGZJ6rxXUjG5UOs.Lb2", Collections.singleton(Role.USER));
-        createDefaultUser("admin", "$2y$12$crhTzs9LTds5.3o1M.XaJO2wb6F4EnGa3GySy0odYcsdon8X.q3ye", Collections.singleton(Role.ADMIN));
+        createDefaultUser("user", "user", Collections.singleton(Role.USER));
+        createDefaultUser("admin", "admin", Collections.singleton(Role.ADMIN));
     }
 
     public void createDefaultUser(String username, String password, Set<Role> roles) {
         if (getUserByUsername(username) == null) {
             try {
-                User user = User.builder().username(username).password(password).roles(roles).build();
+                User user = User.builder().username(username).password(passwordEncoder.encode(password)).roles(roles).build();
                 userRepo.insert(user);
             } catch (MongoWriteException e) {
                 log.error("Impossible to write this user to a database");
@@ -96,7 +103,7 @@ public class UserService implements UserDetailsService {
     }
 
     public User createUser(User user){
-        if (getUserByUsername(user.getUsername()) != null) {
+        if (isUsernameAlreadyPicked(user.getUsername())) {
             throw new NameAlreadyExistsException("User with the same name already exists!");
         } else {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -110,6 +117,10 @@ public class UserService implements UserDetailsService {
 
     public void deleteUser(String id){
         userRepo.deleteById(id);
+    }
+
+    public boolean isUsernameAlreadyPicked(String username){
+        return getUserByUsername(username) != null;
     }
 
 }
