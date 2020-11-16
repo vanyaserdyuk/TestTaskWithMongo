@@ -11,7 +11,6 @@ import ru.testtask.dto.ProjectDTO;
 import ru.testtask.model.Attribute;
 import ru.testtask.model.Project;
 
-import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,9 +18,12 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 public class ProjectDTOConverter {
 
-    @Autowired
     private ModelMapper modelMapper;
 
+    @Autowired
+    public ProjectDTOConverter(ModelMapper modelMapper) {
+        this.modelMapper = modelMapper;
+    }
 
     public ProjectDTO convertProjectToDTO(Project project){
         return modelMapper.map(project, ProjectDTO.class);

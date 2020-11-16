@@ -4,3 +4,4 @@ target
 .idea
 TestTaskWithMongo.iml
 uploads
+*.iml
