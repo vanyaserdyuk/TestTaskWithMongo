@@ -3,8 +3,13 @@ package ru.testtask.converter;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.junit4.SpringRunner;
 import ru.testtask.Application;
 import ru.testtask.config.DTOConverterConfig;
@@ -22,7 +27,7 @@ import static org.junit.Assert.*;
 
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {Application.class})
+@TestPropertySource(locations = { "classpath:default.properties", "classpath:local.properties" })
 public class ProjectDTOConverterTest {
     @Autowired
     private ProjectDTOConverter projectDTOConverter;
@@ -31,6 +36,7 @@ public class ProjectDTOConverterTest {
     private DTOConverterConfig modelMapper;
 
     private Project project;
+    private ProjectDTO projectDTO;
     private CreateProjectDTO createProjectDTO;
 
     @Before
@@ -44,6 +50,7 @@ public class ProjectDTOConverterTest {
 
         project = Project.builder().id("a").name("prj").attributes(attributes)
                 .geometries(new ArrayList<>()).build();
+        projectDTO = ProjectDTO.builder().id("a").name("prj").attrs(attrDTOS).build();
         createProjectDTO = new CreateProjectDTO("prj");
     }
 
