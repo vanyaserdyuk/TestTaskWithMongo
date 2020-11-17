@@ -96,7 +96,7 @@ public class UserControllerTest {
         Mockito.when(userService.getUserById(Mockito.anyString())).thenReturn(Optional.of(user));
         mockMvc.perform(
                 MockMvcRequestBuilders.put("/api/users/a")
-                        .content(objectMapper.writeValueAsString("user"))
+                        .content(objectMapper.writeValueAsString(user))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.id").value("a"))
