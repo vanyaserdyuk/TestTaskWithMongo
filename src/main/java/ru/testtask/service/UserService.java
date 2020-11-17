@@ -41,12 +41,8 @@ public class UserService implements UserDetailsService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     @PostConstruct
     public void init(){
-        objectMapper.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
         mongoTemplate.indexOps("users").ensureIndex(new Index("username", Sort.Direction.ASC).unique());
         createDefaultUsers();
     }

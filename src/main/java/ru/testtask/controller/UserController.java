@@ -6,8 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import ru.testtask.dto.CreateUpdateUserDTO;
 import ru.testtask.dto.UserDTO;
-import ru.testtask.dto.ViewUserDTO;
 import ru.testtask.exception.NameAlreadyExistsException;
 import ru.testtask.model.User;
 import ru.testtask.service.UserService;
@@ -15,6 +15,7 @@ import ru.testtask.service.UserService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("api/users")
@@ -26,9 +27,9 @@ public class UserController {
     @Autowired
     private ModelMapper modelMapper;
 
-    @PreAuthorize("hasAuthority('ADMIN')")
+
     @PutMapping("{id}")
-    public ResponseEntity<User> updateUser(@PathVariable("id") String id, @RequestBody UserDTO clientUser) {
+    public ResponseEntity<User> updateUser(@PathVariable("id") String id, @RequestBody CreateUpdateUserDTO clientUser) {
 
         Optional<User> optionalUser = userService.getUserById(id);
         if (optionalUser.isPresent()){
@@ -43,7 +44,7 @@ public class UserController {
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getUserById(@PathVariable("id") String id) {
         Optional<User> optionalUser = userService.getUserById(id);
@@ -51,10 +52,10 @@ public class UserController {
         if (optionalUser.isEmpty())
             return new ResponseEntity<>(String.format("User with ID %s does not found", id), HttpStatus.NOT_FOUND);
 
-        return new ResponseEntity<>(modelMapper.map(optionalUser.get(), ViewUserDTO.class), HttpStatus.OK);
+        return new ResponseEntity<>(modelMapper.map(optionalUser.get(), UserDTO.class), HttpStatus.OK);
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
+
     @GetMapping("/name/{name}")
     public ResponseEntity<?> getUserByUsername(@PathVariable ("name") String name) {
         User user = userService.getUserByUsername(name);
@@ -62,12 +63,12 @@ public class UserController {
         if (user == null)
             return new ResponseEntity<>(String.format("User with name %s does not found", name), HttpStatus.NOT_FOUND);
 
-        return new ResponseEntity<>(modelMapper.map(user, ViewUserDTO.class), HttpStatus.OK);
+        return new ResponseEntity<>(modelMapper.map(user, UserDTO.class), HttpStatus.OK);
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
+
     @PostMapping()
-    public ResponseEntity<UserDTO> postUser(@RequestBody UserDTO clientUser) {
+    public ResponseEntity<CreateUpdateUserDTO> postUser(@RequestBody CreateUpdateUserDTO clientUser) {
         if (clientUser.getUsername() == null){
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
@@ -75,7 +76,7 @@ public class UserController {
         User user = modelMapper.map(clientUser, User.class);
 
         try {
-            return new ResponseEntity<UserDTO>(modelMapper.map(userService.createUser(user), UserDTO.class), HttpStatus.CREATED);
+            return new ResponseEntity<>(modelMapper.map(userService.createUser(user), CreateUpdateUserDTO.class), HttpStatus.CREATED);
         }
         catch(NameAlreadyExistsException e){
             return new ResponseEntity<>(HttpStatus.CONFLICT);
@@ -83,24 +84,21 @@ public class UserController {
 
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
-    @GetMapping()
-    public ResponseEntity<List<ViewUserDTO>> getAllUsers() {
-        List<User> users = userService.getAllUsers();
-        List<ViewUserDTO> viewUserDTOS = new ArrayList<>();
 
-        for (User user : users) {
-            viewUserDTOS.add(modelMapper.map(user, ViewUserDTO.class));
-        }
+    @GetMapping()
+    public ResponseEntity<List<UserDTO>> getAllUsers() {
+        List<User> users = userService.getAllUsers();
 
         if (users.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        return new ResponseEntity<>(viewUserDTOS, HttpStatus.OK);
+        List<UserDTO> userDTOS = users.stream().map(user -> modelMapper.map(user, UserDTO.class)).collect(Collectors.toList());
+
+        return new ResponseEntity<>(userDTOS, HttpStatus.OK);
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
+
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteUser(@PathVariable("id") String id) {
 
