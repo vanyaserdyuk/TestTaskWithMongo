@@ -3,21 +3,16 @@ package ru.testtask.converter;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.junit4.SpringRunner;
 import ru.testtask.Application;
+import ru.testtask.config.DTOConverterConfig;
 import ru.testtask.dto.AttrDTO;
 import ru.testtask.dto.CreateProjectDTO;
 import ru.testtask.dto.ProjectDTO;
 import ru.testtask.model.Attribute;
 import ru.testtask.model.Project;
-import ru.testtask.service.UserService;
 
 
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package ru.testtask.converter;
+package ru.testtask.config;
 
 import org.modelmapper.ModelMapper;
 import org.modelmapper.convention.MatchingStrategies;
