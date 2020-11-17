@@ -1,7 +1,5 @@
 package ru.testtask.service;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.MongoWriteException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +19,6 @@ import ru.testtask.model.User;
 import ru.testtask.repo.UserRepo;
 
 import javax.annotation.PostConstruct;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -87,14 +84,12 @@ public class UserService implements UserDetailsService {
     }
 
     public void createDefaultUser(String username, String password, Set<Role> roles) {
-        if (getUserByUsername(username) == null) {
             try {
-                User user = User.builder().username(username).password(passwordEncoder.encode(password)).roles(roles).build();
-                userRepo.insert(user);
-            } catch (MongoWriteException e) {
+                User user = User.builder().username(username).password(password).roles(roles).build();
+                createUser(user);
+            } catch (MongoWriteException | NameAlreadyExistsException e) {
                 log.error("Impossible to write this user to a database");
             }
-        }
     }
 
     public User createUser(User user){
