@@ -60,7 +60,8 @@ public class MainControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
         )
                 .andExpect(status().isCreated())
-                .andExpect(MockMvcResultMatchers.jsonPath(objectMapper.writeValueAsString(project)));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.id").value("a"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.name").value("prj"));
     }
 
 
@@ -78,8 +79,8 @@ public class MainControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.id").value("a"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.name").value("prj"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.attrs[0].id" , is("id")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.attrs[0].name" , is("attr")));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.attrs[0].id").value("id"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.attrs[0].name").value("attr"));
     }
 
     @Test
