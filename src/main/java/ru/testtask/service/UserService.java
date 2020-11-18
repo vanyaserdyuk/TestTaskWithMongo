@@ -84,12 +84,12 @@ public class UserService implements UserDetailsService {
     }
 
     public void createDefaultUser(String username, String password, Set<Role> roles) {
-        try {
-            User user = User.builder().username(username).password(password).roles(roles).build();
-            createUser(user);
-        } catch (MongoWriteException | NameAlreadyExistsException e) {
-            log.error("Impossible to write this user to a database");
-        }
+            try {
+                User user = User.builder().username(username).password(password).roles(roles).build();
+                createUser(user);
+            } catch (MongoWriteException | NameAlreadyExistsException e) {
+                log.error("Impossible to write this user to a database");
+            }
     }
 
     public User createUser(User user){
