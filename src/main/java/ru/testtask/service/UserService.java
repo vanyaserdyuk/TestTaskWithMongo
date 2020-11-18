@@ -6,9 +6,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import ru.testtask.exception.NameAlreadyExistsException;
@@ -25,7 +22,7 @@ import java.util.Set;
 
 @Service
 @Slf4j
-public class UserService implements UserDetailsService {
+public class UserService{
 
     private final UserRepo userRepo;
 
@@ -52,17 +49,6 @@ public class UserService implements UserDetailsService {
     public void init(){
         mongoTemplate.indexOps("users").ensureIndex(new Index("username", Sort.Direction.ASC).unique());
         createDefaultUsers();
-    }
-
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepo.findByUsername(username);
-
-        if (user == null) {
-            throw new UsernameNotFoundException(String.format("User with username %s does not exists", username));
-        }
-
-        return user;
     }
 
     public User getUserByUsername(String username) {
@@ -98,8 +84,10 @@ public class UserService implements UserDetailsService {
             try {
                 User user = User.builder().username(username).password(password).roles(roles).build();
                 createUser(user);
-            } catch (MongoWriteException | NameAlreadyExistsException e) {
+            } catch (MongoWriteException e) {
                 log.error("Impossible to write this user to a database");
+            } catch (NameAlreadyExistsException e){
+                log.info("Default users are created");
             }
     }
 

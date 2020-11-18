@@ -52,7 +52,7 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
-            <version>RELEASE</version>
+            <version>5.3.5.RELEASE</version>
             <scope>test</scope>
         </dependency>
 
@@ -109,11 +109,7 @@
             <artifactId>slf4j-api</artifactId>
             <version>1.7.30</version>
         </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

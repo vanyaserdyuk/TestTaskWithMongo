@@ -4,7 +4,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.testtask.dto.CreateUpdateUserDTO;
 import ru.testtask.dto.UserDTO;
@@ -12,7 +11,6 @@ import ru.testtask.exception.NameAlreadyExistsException;
 import ru.testtask.model.User;
 import ru.testtask.service.UserService;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -29,7 +27,7 @@ public class UserController {
 
 
     @PutMapping("{id}")
-    public ResponseEntity<User> updateUser(@PathVariable("id") String id, @RequestBody CreateUpdateUserDTO clientUser) {
+    public ResponseEntity<UserDTO> updateUser(@PathVariable("id") String id, @RequestBody CreateUpdateUserDTO clientUser) {
 
         Optional<User> optionalUser = userService.getUserById(id);
         if (optionalUser.isPresent()){
@@ -38,7 +36,7 @@ public class UserController {
             user.setUsername(clientUser.getUsername());
             user.setPassword(clientUser.getPassword());
             userService.updateUser(user);
-            return new ResponseEntity<>(user, HttpStatus.OK);
+            return new ResponseEntity<>(modelMapper.map(user, UserDTO.class), HttpStatus.OK);
         }
 
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -68,7 +66,7 @@ public class UserController {
 
 
     @PostMapping()
-    public ResponseEntity<CreateUpdateUserDTO> postUser(@RequestBody CreateUpdateUserDTO clientUser) {
+    public ResponseEntity<UserDTO> postUser(@RequestBody CreateUpdateUserDTO clientUser) {
         if (clientUser.getUsername() == null){
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
@@ -76,7 +74,7 @@ public class UserController {
         User user = modelMapper.map(clientUser, User.class);
 
         try {
-            return new ResponseEntity<>(modelMapper.map(userService.createUser(user), CreateUpdateUserDTO.class), HttpStatus.CREATED);
+            return new ResponseEntity<>(modelMapper.map(userService.createUser(user), UserDTO.class), HttpStatus.CREATED);
         }
         catch(NameAlreadyExistsException e){
             return new ResponseEntity<>(HttpStatus.CONFLICT);
@@ -88,10 +86,6 @@ public class UserController {
     @GetMapping()
     public ResponseEntity<List<UserDTO>> getAllUsers() {
         List<User> users = userService.getAllUsers();
-
-        if (users.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
 
         List<UserDTO> userDTOS = users.stream().map(user -> modelMapper.map(user, UserDTO.class)).collect(Collectors.toList());
 
