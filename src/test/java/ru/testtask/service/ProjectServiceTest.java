@@ -1,34 +1,49 @@
 package ru.testtask.service;
 
+import lombok.extern.slf4j.Slf4j;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.junit4.SpringRunner;
+import ru.testtask.Application;
+import ru.testtask.exception.NameAlreadyExistsException;
 import ru.testtask.model.Attribute;
 import ru.testtask.model.Geometry;
 import ru.testtask.model.Project;
-import ru.testtask.service.ProjectService;
+
 import java.util.List;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+
+import static org.junit.Assert.*;
 
 
-@RunWith(MockitoJUnitRunner.class)
+@Slf4j
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {Application.class})
 public class ProjectServiceTest {
 
-    private static ProjectService projectService;
+    @Autowired
+    private ProjectService projectService;
 
-    private static Project testProject;
+    @MockBean
+    private UserService userService;
+
+    private Project testProject;
 
     @Before
     public void buildTestProject(){
         testProject = new Project();
-        testProject.setName("Test");
+        testProject.setName("TestProject");
+
     }
 
     @Before
-    public void initService(){
-         projectService = new ProjectService();
+    public void clearDb(){
+        projectService.deleteAllProjects();
     }
 
     @Test
@@ -48,4 +63,20 @@ public class ProjectServiceTest {
             assertNotNull(attribute.getId());
         }
     }
+
+    @Test(expected = NameAlreadyExistsException.class)
+    public void checkSimilarNamesCreationTest(){
+        projectService.createProject(testProject);
+        projectService.createProject(testProject);
+    }
+
+    @Test
+    public void isCurrentUserOwnerOfTest(){
+        Mockito.when(userService.getCurrentUserId()).thenReturn("a");
+        projectService.createProject(testProject);
+        testProject.setOwnerId("a");
+        assertTrue(projectService.isCurrentUserOwnerOf(testProject.getId()));
+    }
+
+
 }

@@ -59,9 +59,6 @@ public class ProjectDTOConverterTest {
         Project resultProject = projectDTOConverter.convertDTOtoProject(createProjectDTO);
         assertNotNull(resultProject);
         assertEquals(createProjectDTO.getName(), resultProject.getName());
-        assertNotNull(resultProject.getId());
-        assertNotNull(resultProject.getGeometries());
-        assertNotNull(resultProject.getAttributes());
     }
 
     @Test
