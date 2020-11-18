@@ -56,8 +56,8 @@ public class MainController {
         Project project = projectDtoConverter.convertDTOtoProject(createProjectDTO);
 
         try {
-            projectService.createProject(project);
-            return new ResponseEntity<>(projectDtoConverter.convertProjectToDTO(project), HttpStatus.CREATED);
+            return new ResponseEntity<>(projectDtoConverter.convertProjectToDTO(projectService.createProject(project)),
+                    HttpStatus.CREATED);
         }
         catch(NameAlreadyExistsException e){
             return new ResponseEntity<>(HttpStatus.CONFLICT);
