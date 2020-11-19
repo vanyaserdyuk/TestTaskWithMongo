@@ -1,11 +1,20 @@
+package ru.testtask.repo;
+
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.internal.MongoClientImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Profile;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import ru.testtask.Application;
+import ru.testtask.config.TestConfig;
 import ru.testtask.model.Attribute;
 import ru.testtask.model.Geometry;
 import ru.testtask.model.Project;
@@ -16,8 +25,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 @RunWith(SpringRunner.class)
-@DataMongoTest
-@TestPropertySource(locations = { "classpath:default.properties", "classpath:local.properties" })
+@AutoConfigureDataMongo
+@SpringBootTest(classes = {Application.class})
+@ContextConfiguration(classes = {TestConfig.class})
+@ActiveProfiles("test")
 public class RepoTest {
 
     ProjectRepo projectRepo;

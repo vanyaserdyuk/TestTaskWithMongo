@@ -4,9 +4,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
+import ru.testtask.Application;
 import ru.testtask.config.DTOConverterConfig;
 import ru.testtask.config.TestConfig;
 import ru.testtask.dto.AttrDTO;
@@ -23,6 +25,7 @@ import static org.junit.Assert.assertNotNull;
 
 
 @RunWith(SpringRunner.class)
+@SpringBootTest(classes = {Application.class})
 @ContextConfiguration(classes = {TestConfig.class})
 @ActiveProfiles("test")
 public class ProjectDTOConverterTest {
@@ -70,6 +73,9 @@ public class ProjectDTOConverterTest {
         Project resultProject = projectDTOConverter.convertDTOtoProject(createProjectDTO);
         assertNotNull(resultProject);
         assertEquals(createProjectDTO.getName(), resultProject.getName());
+        assertNotNull(resultProject.getId());
+        assertNotNull(resultProject.getGeometries());
+        assertNotNull(resultProject.getAttributes());
     }
 
     @Test
@@ -91,7 +97,7 @@ public class ProjectDTOConverterTest {
         assertEquals(projects.get(0).getId(), testList.get(0).getId());
         assertEquals(projects.get(0).getName(), testList.get(0).getName());
         assertEquals(projects.get(1).getId(), testList.get(1).getId());
-        assertEquals(projects.get(1).getName(), testList.get(1).getName());
+        assertEquals(projects.get(1).getName(), testList.get(0).getName());
 
         for (int i = 0; i < project.getAttributes().size(); i++) {
             assertEquals(project.getAttributes().get(i).getId(), testList.get(0).getAttrs().get(i).getId());
