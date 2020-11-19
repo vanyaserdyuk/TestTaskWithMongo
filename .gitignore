@@ -2,6 +2,6 @@
 *.jar
 target
 .idea
-TestTaskWithMongo.iml
 uploads
 *.iml
+local.properties

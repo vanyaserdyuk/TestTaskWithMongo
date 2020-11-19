@@ -3,31 +3,28 @@ package ru.testtask.converter;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.junit4.SpringRunner;
-import ru.testtask.Application;
 import ru.testtask.config.DTOConverterConfig;
+import ru.testtask.config.TestConfig;
 import ru.testtask.dto.AttrDTO;
 import ru.testtask.dto.CreateProjectDTO;
 import ru.testtask.dto.ProjectDTO;
 import ru.testtask.model.Attribute;
 import ru.testtask.model.Project;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 
 @RunWith(SpringRunner.class)
-@TestPropertySource(locations = { "classpath:default.properties", "classpath:local.properties" })
+@ContextConfiguration(classes = {TestConfig.class})
+@ActiveProfiles("test")
 public class ProjectDTOConverterTest {
     @Autowired
     private ProjectDTOConverter projectDTOConverter;
