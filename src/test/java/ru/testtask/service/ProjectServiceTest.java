@@ -4,14 +4,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import ru.testtask.Application;
 import ru.testtask.config.TestConfig;
@@ -19,8 +17,7 @@ import ru.testtask.exception.NameAlreadyExistsException;
 import ru.testtask.model.Attribute;
 import ru.testtask.model.Geometry;
 import ru.testtask.model.Project;
-import ru.testtask.repo.ProjectRepo;
-import ru.testtask.service.ProjectService;
+
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -73,7 +70,15 @@ public class ProjectServiceTest {
 
     @Test(expected = NameAlreadyExistsException.class)
     public void checkSimilarNamesCreationTest(){
-        Project resultProject = projectService.createProject(testProject);
-        Project resultProject2 = projectService.createProject(testProject);
+        projectService.createProject(testProject);
+        projectService.createProject(testProject);
+    }
+
+    @Test
+    public void isCurrentUserOwnerOfTest(){
+        Mockito.when(userService.getCurrentUserId()).thenReturn("a");
+        projectService.createProject(testProject);
+        testProject.setOwnerId("a");
+        assertTrue(projectService.isCurrentUserOwnerOf(testProject.getId()));
     }
 }

@@ -36,7 +36,6 @@ public class ProjectDTOConverterTest {
     private DTOConverterConfig modelMapper;
 
     private Project project;
-    private ProjectDTO projectDTO;
     private CreateProjectDTO createProjectDTO;
 
     @Before
@@ -44,13 +43,9 @@ public class ProjectDTOConverterTest {
         List<Attribute> attributes = new ArrayList<>();
         attributes.add(Attribute.builder().name("attr1").id("a1").build());
         attributes.add(Attribute.builder().name("attr2").id("a2").build());
-        List<AttrDTO> attrDTOS = new ArrayList<>();
-        attrDTOS.add(AttrDTO.builder().name("attrd1").id("1").build());
-        attrDTOS.add(AttrDTO.builder().name("attrd1").id("2").build());
 
         project = Project.builder().id("a").name("prj").attributes(attributes)
                 .geometries(new ArrayList<>()).build();
-        projectDTO = ProjectDTO.builder().id("a").name("prj").attrs(attrDTOS).build();
         createProjectDTO = new CreateProjectDTO("prj");
     }
 
@@ -73,9 +68,6 @@ public class ProjectDTOConverterTest {
         Project resultProject = projectDTOConverter.convertDTOtoProject(createProjectDTO);
         assertNotNull(resultProject);
         assertEquals(createProjectDTO.getName(), resultProject.getName());
-        assertNotNull(resultProject.getId());
-        assertNotNull(resultProject.getGeometries());
-        assertNotNull(resultProject.getAttributes());
     }
 
     @Test
@@ -97,7 +89,7 @@ public class ProjectDTOConverterTest {
         assertEquals(projects.get(0).getId(), testList.get(0).getId());
         assertEquals(projects.get(0).getName(), testList.get(0).getName());
         assertEquals(projects.get(1).getId(), testList.get(1).getId());
-        assertEquals(projects.get(1).getName(), testList.get(0).getName());
+        assertEquals(projects.get(1).getName(), testList.get(1).getName());
 
         for (int i = 0; i < project.getAttributes().size(); i++) {
             assertEquals(project.getAttributes().get(i).getId(), testList.get(0).getAttrs().get(i).getId());
