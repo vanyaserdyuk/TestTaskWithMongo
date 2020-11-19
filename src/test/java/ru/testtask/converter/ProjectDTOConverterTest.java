@@ -31,7 +31,6 @@ public class ProjectDTOConverterTest {
     private DTOConverterConfig modelMapper;
 
     private Project project;
-    private ProjectDTO projectDTO;
     private CreateProjectDTO createProjectDTO;
 
     @Before
@@ -45,7 +44,6 @@ public class ProjectDTOConverterTest {
 
         project = Project.builder().id("a").name("prj").attributes(attributes)
                 .geometries(new ArrayList<>()).build();
-        projectDTO = ProjectDTO.builder().id("a").name("prj").attrs(attrDTOS).build();
         createProjectDTO = new CreateProjectDTO("prj");
     }
 
