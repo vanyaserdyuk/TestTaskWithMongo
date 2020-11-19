@@ -6,10 +6,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import ru.testtask.exception.NameAlreadyExistsException;
 import ru.testtask.exception.WrongMethodUseException;
 import ru.testtask.model.Role;
 import ru.testtask.model.User;
@@ -17,37 +16,30 @@ import ru.testtask.repo.UserRepo;
 
 import javax.annotation.PostConstruct;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 @Service
 @Slf4j
-public class UserService implements UserDetailsService {
+public class UserService{
 
     private final UserRepo userRepo;
 
     private final MongoTemplate mongoTemplate;
 
-    public UserService(UserRepo userRepo, MongoTemplate mongoTemplate) {
+    private final PasswordEncoder passwordEncoder;
+
+    public UserService(UserRepo userRepo, MongoTemplate mongoTemplate, PasswordEncoder passwordEncoder) {
         this.userRepo = userRepo;
         this.mongoTemplate = mongoTemplate;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostConstruct
     public void init(){
         mongoTemplate.indexOps("users").ensureIndex(new Index("username", Sort.Direction.ASC).unique());
         createDefaultUsers();
-    }
-
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepo.findByUsername(username);
-
-        if (user == null) {
-            throw new UsernameNotFoundException(String.format("User with username %s does not exists", username));
-        }
-
-        return user;
     }
 
     public User getUserByUsername(String username) {
@@ -70,6 +62,7 @@ public class UserService implements UserDetailsService {
     }
 
     public void updateUser(User user) {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         userRepo.save(user);
     }
 
@@ -79,14 +72,35 @@ public class UserService implements UserDetailsService {
     }
 
     public void createDefaultUser(String username, String password, Set<Role> roles) {
-        if (getUserByUsername(username) == null) {
             try {
                 User user = User.builder().username(username).password(password).roles(roles).build();
-                userRepo.insert(user);
+                createUser(user);
             } catch (MongoWriteException e) {
                 log.error("Impossible to write this user to a database");
+            } catch (NameAlreadyExistsException e){
+                log.info("Default users are created");
             }
+    }
+
+    public User createUser(User user){
+        if (isUsernameAlreadyPicked(user.getUsername())) {
+            throw new NameAlreadyExistsException("User with the same name already exists!");
+        } else {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+            return userRepo.insert(user);
         }
+    }
+
+    public List<User> getAllUsers(){
+        return userRepo.findAll();
+    }
+
+    public void deleteUser(String id){
+        userRepo.deleteById(id);
+    }
+
+    public boolean isUsernameAlreadyPicked(String username){
+        return getUserByUsername(username) != null;
     }
 
 }
