@@ -1,7 +1,6 @@
 package ru.testtask.service;
 
 import lombok.extern.slf4j.Slf4j;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -9,8 +8,11 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import ru.testtask.Application;
+import ru.testtask.config.TestConfig;
 import ru.testtask.exception.NameAlreadyExistsException;
 import ru.testtask.model.Attribute;
 import ru.testtask.model.Geometry;
@@ -24,6 +26,8 @@ import static org.junit.Assert.*;
 @Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {Application.class})
+@ContextConfiguration(classes = {TestConfig.class})
+@ActiveProfiles("test")
 public class ProjectServiceTest {
 
     @Autowired
@@ -77,6 +81,4 @@ public class ProjectServiceTest {
         testProject.setOwnerId("a");
         assertTrue(projectService.isCurrentUserOwnerOf(testProject.getId()));
     }
-
-
 }

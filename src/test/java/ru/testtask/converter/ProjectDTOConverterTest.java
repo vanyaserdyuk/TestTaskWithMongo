@@ -5,24 +5,29 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import ru.testtask.Application;
 import ru.testtask.config.DTOConverterConfig;
+import ru.testtask.config.TestConfig;
 import ru.testtask.dto.AttrDTO;
 import ru.testtask.dto.CreateProjectDTO;
 import ru.testtask.dto.ProjectDTO;
 import ru.testtask.model.Attribute;
 import ru.testtask.model.Project;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {Application.class})
+@ContextConfiguration(classes = {TestConfig.class})
+@ActiveProfiles("test")
 public class ProjectDTOConverterTest {
     @Autowired
     private ProjectDTOConverter projectDTOConverter;
@@ -38,9 +43,6 @@ public class ProjectDTOConverterTest {
         List<Attribute> attributes = new ArrayList<>();
         attributes.add(Attribute.builder().name("attr1").id("a1").build());
         attributes.add(Attribute.builder().name("attr2").id("a2").build());
-        List<AttrDTO> attrDTOS = new ArrayList<>();
-        attrDTOS.add(AttrDTO.builder().name("attrd1").id("1").build());
-        attrDTOS.add(AttrDTO.builder().name("attrd1").id("2").build());
 
         project = Project.builder().id("a").name("prj").attributes(attributes)
                 .geometries(new ArrayList<>()).build();

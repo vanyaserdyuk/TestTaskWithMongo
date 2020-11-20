@@ -1,13 +1,17 @@
 package ru.testtask.repo;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import ru.testtask.Application;
+import ru.testtask.config.TestConfig;
 import ru.testtask.model.Attribute;
 import ru.testtask.model.Geometry;
 import ru.testtask.model.Project;
@@ -20,10 +24,12 @@ import static org.junit.Assert.*;
 @RunWith(SpringRunner.class)
 @AutoConfigureDataMongo
 @SpringBootTest(classes = {Application.class})
+@ContextConfiguration(classes = {TestConfig.class})
+@ActiveProfiles("test")
 public class RepoTest {
 
     @Autowired
-    private ProjectRepo projectRepo;
+    ProjectRepo projectRepo;
 
     Project project;
 
@@ -39,6 +45,11 @@ public class RepoTest {
         projectRepo.save(project);
     }
 
+    @After
+    public void clearDb(){
+        projectRepo.deleteAll();
+    }
+
     @Test
     public void checkId(){
         assertNotNull(projectRepo.findAll());
@@ -51,6 +62,7 @@ public class RepoTest {
         Project prj = projectRepo.findByName("Test");
         assertNotNull(prj);
         assertEquals(prj.getName(), project.getName());
+
     }
 
     @Test
@@ -71,5 +83,4 @@ public class RepoTest {
         Optional<Project> optional = projectRepo.findById("1");
         assertTrue(optional.isEmpty());
     }
-
 }
