@@ -5,7 +5,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import javax.persistence.Id;
 
 @Document(collection = "messages")
-public class ChatMessage {
+public class Message {
     @Id
     private String id;
     private MessageType type;

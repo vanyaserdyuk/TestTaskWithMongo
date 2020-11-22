@@ -17,14 +17,8 @@ var username = null;
 var roomId = null;
 var topic = null;
 
-var colors = [
-    '#2196F3', '#32c787', '#00BCD4', '#ff5652',
-    '#ffc107', '#ff85af', '#FF9800', '#39bbb0'
-];
-
 function connect(event) {
     username = nameInput.val().trim();
-    Cookies.set('name', username);
     if (username) {
         usernamePage.classList.add('hidden');
         chatPage.classList.remove('hidden');
@@ -37,10 +31,9 @@ function connect(event) {
     event.preventDefault();
 }
 
-// Leave the current room and enter a new one.
+
 function enterRoom(newRoomId) {
     roomId = newRoomId;
-    Cookies.set('roomId', roomId);
     roomIdDisplay.textContent = roomId;
     topic = `/app/chat/${newRoomId}`;
 
@@ -122,27 +115,7 @@ function onMessageReceived(payload) {
     messageArea.scrollTop = messageArea.scrollHeight;
 }
 
-function getAvatarColor(messageSender) {
-    var hash = 0;
-    for (var i = 0; i < messageSender.length; i++) {
-        hash = 31 * hash + messageSender.charCodeAt(i);
-    }
-    var index = Math.abs(hash % colors.length);
-    return colors[index];
-}
-
-$(document).ready(function() {
-    var savedName = Cookies.get('name');
-    if (savedName) {
-        nameInput.val(savedName);
-    }
-
-    var savedRoom = Cookies.get('roomId');
-    if (savedRoom) {
-        roomInput.val(savedRoom);
-    }
-
-    usernamePage.classList.remove('hidden');
-    usernameForm.addEventListener('submit', connect, true);
-    messageForm.addEventListener('submit', sendMessage, true);
+ $(document).ready(function() {
+    usernameForm.addEventListener('submit', connect);
+    messageForm.addEventListener('submit', sendMessage);
 });

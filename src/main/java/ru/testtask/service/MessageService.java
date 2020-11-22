@@ -2,7 +2,7 @@ package ru.testtask.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.testtask.model.ChatMessage;
+import ru.testtask.model.Message;
 import ru.testtask.repo.MessageRepo;
 
 import java.util.List;
@@ -13,11 +13,11 @@ public class MessageService {
     @Autowired
     private MessageRepo messageRepo;
 
-    public ChatMessage addMessage(ChatMessage chatMessage){
-        return messageRepo.insert(chatMessage);
+    public Message addMessage(Message message){
+        return messageRepo.insert(message);
     }
 
-    public List<ChatMessage> getAllMessages(){
+    public List<Message> getAllMessages(){
         return messageRepo.findAll();
     }
 }
