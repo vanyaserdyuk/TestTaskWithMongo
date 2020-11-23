@@ -8,6 +8,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import ru.testtask.handler.CustomHandshakeHandler;
 
 @Configuration
 @EnableWebSocketMessageBroker
@@ -15,26 +16,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws").withSockJS();
+        registry.addEndpoint("/ws").setHandshakeHandler(new CustomHandshakeHandler()).withSockJS();
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.setApplicationDestinationPrefixes("/app");
-        registry.enableSimpleBroker("/channel")
-                .setTaskScheduler(heartBeatScheduler())
-                .setHeartbeatValue(new long[]{60000, 0});
+        registry.enableSimpleBroker("/channel");
+        }
 
     }
 
-    @Bean
-    public TaskScheduler heartBeatScheduler() {
-        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-
-        scheduler.setPoolSize(1);
-        scheduler.setDaemon(true);
-        scheduler.setThreadNamePrefix("heartbeat");
-
-        return scheduler;
-    }
-}

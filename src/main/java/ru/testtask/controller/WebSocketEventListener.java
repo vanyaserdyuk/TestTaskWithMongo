@@ -10,6 +10,7 @@ import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import ru.testtask.model.Message;
 
+import javax.annotation.PostConstruct;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,14 +21,32 @@ import static java.lang.String.format;
 @Component
 public class WebSocketEventListener {
 
-    private List<Principal> users = new ArrayList<Principal>();
+    private final List<String> usernames = new ArrayList<String>();
+    private final String dest = "/channel";
 
     @Autowired
     private SimpMessageSendingOperations messagingTemplate;
 
+    @PostConstruct
+    public void init(){
+        Thread heartBeat = new Thread(new Runnable() {
+            @Override
+            public void run(){
+                usernames.forEach(username -> messagingTemplate.convertAndSendToUser(username, dest, "ok"));
+                try {
+                    Thread.sleep(60000);
+                } catch (InterruptedException e) {
+                    log.error("Thread was interrupted");
+                }
+            }
+        });
+
+        heartBeat.setDaemon(true);
+        heartBeat.start();
+    }
+
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
-        users.add(event.getUser());
         log.info("Received a new web socket connection");
     }
 
@@ -47,4 +66,9 @@ public class WebSocketEventListener {
             messagingTemplate.convertAndSend(format("/channel/%s", roomId), message);
         }
     }
+
+    public void addUsername(String username){
+        this.usernames.add(username);
+    }
+
 }

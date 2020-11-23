@@ -1,14 +1,22 @@
 package ru.testtask.model;
 
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import javax.persistence.Id;
 
 @Document(collection = "messages")
+@RequiredArgsConstructor
+@NoArgsConstructor
 public class Message {
     @Id
     private String id;
     private MessageType type;
+    @NonNull
     private String content;
     private String sender;
 
