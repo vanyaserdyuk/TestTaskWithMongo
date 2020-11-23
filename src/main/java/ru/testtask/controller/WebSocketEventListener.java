@@ -1,8 +1,6 @@
 package ru.testtask.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -12,17 +10,24 @@ import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import ru.testtask.model.Message;
 
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.List;
+
 import static java.lang.String.format;
 
 @Slf4j
 @Component
 public class WebSocketEventListener {
 
+    private List<Principal> users = new ArrayList<Principal>();
+
     @Autowired
     private SimpMessageSendingOperations messagingTemplate;
 
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
+        users.add(event.getUser());
         log.info("Received a new web socket connection");
     }
 
