@@ -103,4 +103,14 @@ public class UserService{
         return getUserByUsername(username) != null;
     }
 
+    public User getAuthorizedUser(String username, String password) {
+        User user = userRepo.findByUsername(username);
+        if (user != null) {
+            if (passwordEncoder.matches(password, user.getPassword())) {
+                return user;
+            }
+        }
+        return null;
+    }
+
 }
