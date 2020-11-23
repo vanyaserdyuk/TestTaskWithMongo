@@ -10,11 +10,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import ru.testtask.Application;
+import ru.testtask.config.TestConfig;
 import ru.testtask.dto.AttrDTO;
 import ru.testtask.dto.CreateProjectDTO;
 import ru.testtask.dto.ProjectDTO;
@@ -37,6 +40,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {Application.class})
 @AutoConfigureMockMvc
+@ContextConfiguration(classes = {TestConfig.class})
+@ActiveProfiles("test")
 @WithMockUser(authorities = "MODERATOR")
 public class MainControllerTest {
 
