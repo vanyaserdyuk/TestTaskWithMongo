@@ -45,8 +45,11 @@ public class FileController {
 
     @DeleteMapping("/{filename}")
     public ResponseEntity<?> removeFile(@PathVariable String filename) throws IOException {
-         if (fileService.findByFilename(filename) != null)
-         fileService.removeFile(filename);
+         if (fileService.findByFilename(filename) != null) {
+             fileService.removeFile(filename);
+         }
+         else return new ResponseEntity<>(String.format("File with filename %s does not found", filename),
+                 HttpStatus.NOT_FOUND);
          return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
