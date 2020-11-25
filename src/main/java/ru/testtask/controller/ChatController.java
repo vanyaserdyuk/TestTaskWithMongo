@@ -1,52 +1,32 @@
 package ru.testtask.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.handler.annotation.DestinationVariable;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import org.springframework.stereotype.Controller;
-import ru.testtask.model.Message;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+import ru.testtask.model.ChatMessage;
 import ru.testtask.service.MessageService;
 
 import java.util.List;
 
-import static java.lang.String.format;
-
-@Controller
+@RestController
 public class ChatController {
-    @Autowired
-    private SimpMessageSendingOperations messagingTemplate;
 
     @Autowired
     private MessageService messageService;
 
-    @MessageMapping("/chat/{roomId}/sendMessage")
-    public void sendMessage(@DestinationVariable String roomId, @Payload Message message) {
-        if (message.getContent().length() > 1000){
-            message.setContent(message.getContent().substring(0, 1000));
-        }
-
-        messageService.addMessage(message);
-
-        messagingTemplate.convertAndSend(format("/channel/%s", roomId), message);
+    @GetMapping("/chat/{roomId}/sendMessage")
+    public ResponseEntity<?> getMessageList(@PathVariable String roomId,
+                                            @PageableDefault(size = 15, direction = Sort.Direction.DESC)
+                                                    Pageable pageable){
+        Page<ChatMessage> chatMessages = messageService.findForRoom(pageable, roomId);
+        return new ResponseEntity<Page<ChatMessage>>(chatMessages, HttpStatus.OK);
     }
 
-    @MessageMapping("/chat/{roomId}/addUser")
-    public void addUser(@DestinationVariable String roomId, @Payload Message message,
-                        SimpMessageHeaderAccessor headerAccessor) {
-        String currentRoomId = (String) headerAccessor.getSessionAttributes().put("room_id", roomId);
-        if (currentRoomId != null) {
-            Message leaveMessage = new Message();
-            leaveMessage.setType(Message.MessageType.LEAVE);
-            leaveMessage.setSender(message.getSender());
-            messagingTemplate.convertAndSend(format("/channel/%s", currentRoomId), leaveMessage);
-        }
-        headerAccessor.getSessionAttributes().put("username", message.getSender());
-        messagingTemplate.convertAndSend(format("/channel/%s", roomId), message);
-
-        List<Message> messages = messageService.getAllMessages();
-        messages.forEach(message1 -> messagingTemplate.convertAndSend(format("/channel/%s", roomId), message));
-    }
 }

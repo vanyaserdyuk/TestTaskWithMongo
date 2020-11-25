@@ -11,6 +11,7 @@ var messageArea = document.querySelector('#messageArea');
 var connectingElement = document.querySelector('.connecting');
 var roomIdDisplay = document.querySelector('#room-id-display');
 
+
 var stompClient = null;
 var currentSubscription;
 var username = null;
@@ -70,7 +71,8 @@ function sendMessage(event) {
         var chatMessage = {
             sender: username,
             content: messageInput.value,
-            type: 'CHAT'
+            type: 'CHAT',
+            roomId: roomId
         };
         stompClient.send(`${topic}/sendMessage`, {}, JSON.stringify(chatMessage));
     }
@@ -95,7 +97,7 @@ function onMessageReceived(payload) {
         var avatarElement = document.createElement('i');
         var avatarText = document.createTextNode(message.sender[0]);
         avatarElement.appendChild(avatarText);
-        avatarElement.style['background-color'] = getAvatarColor(message.sender);
+
 
         messageElement.appendChild(avatarElement);
 
@@ -113,6 +115,10 @@ function onMessageReceived(payload) {
 
     messageArea.appendChild(messageElement);
     messageArea.scrollTop = messageArea.scrollHeight;
+}
+
+function getHistory(){
+    var
 }
 
  $(document).ready(function() {

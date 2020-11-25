@@ -1,8 +1,6 @@
 package ru.testtask.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -10,7 +8,7 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
-import ru.testtask.model.Message;
+import ru.testtask.model.ChatMessage;
 
 import static java.lang.String.format;
 
@@ -35,11 +33,11 @@ public class WebSocketEventListener {
         if (username != null) {
             log.info("User Disconnected: " + username);
 
-            Message message = new Message();
-            message.setType(Message.MessageType.LEAVE);
-            message.setSender(username);
+            ChatMessage chatMessage = new ChatMessage();
+            chatMessage.setType(ChatMessage.MessageType.LEAVE);
+            chatMessage.setSender(username);
 
-            messagingTemplate.convertAndSend(format("/channel/%s", roomId), message);
+            messagingTemplate.convertAndSend(format("/channel/%s", roomId), chatMessage);
         }
     }
 }

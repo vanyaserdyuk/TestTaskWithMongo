@@ -1,16 +1,23 @@
 package ru.testtask.model;
 
+import lombok.Data;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 
-@Document(collection = "messages")
-public class Message {
+@Document(collection = "chatMessages")
+@Data
+public class ChatMessage {
     @Id
     private String id;
     private MessageType type;
     private String content;
     private String sender;
+
+    @ManyToOne
+    private String roomId;
 
     public enum MessageType {
         CHAT,
