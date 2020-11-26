@@ -12,6 +12,7 @@ import ru.testtask.model.ChatRoom;
 import ru.testtask.service.ChatRoomService;
 import ru.testtask.service.MessageService;
 
+import java.time.LocalTime;
 import java.util.List;
 
 import static java.lang.String.format;
@@ -27,22 +28,23 @@ public class ChatWsController {
     @Autowired
     private ChatRoomService chatRoomService;
 
-    @MessageMapping("/chat/{roomId}/sendMessage")
-    public void sendMessage(@DestinationVariable String roomId, @Payload ChatMessage chatMessage) {
+    @MessageMapping("/chat/{roomName}/sendMessage")
+    public void sendMessage(@DestinationVariable String roomName, @Payload ChatMessage chatMessage) {
         if (chatMessage.getContent().length() > 1000){
             chatMessage.setContent(chatMessage.getContent().substring(0, 1000));
         }
 
-        chatMessage.setRoomId(roomId);
+        chatMessage.setRoomName(roomName);
         messageService.addMessage(chatMessage);
-        chatRoomService.addChatRoom(ChatRoom.builder().roomId(roomId).build());
+        chatRoomService.addChatRoom(ChatRoom.builder().roomName(roomName).build());
+        chatRoomService.addMessageToChatRoom(chatMessage);
 
-        messagingTemplate.convertAndSend(format("/channel/%s", roomId), chatMessage);
+        messagingTemplate.convertAndSend(format("/channel/%s", roomName), chatMessage);
     }
 
     @MessageMapping("/chat/{roomId}/addUser")
-    public void addUser(@DestinationVariable String roomId, @Payload ChatMessage chatMessage,
-                        SimpMessageHeaderAccessor headerAccessor) {
+    public void addUserToRoom(@DestinationVariable String roomId, @Payload ChatMessage chatMessage,
+                              SimpMessageHeaderAccessor headerAccessor) {
         String currentRoomId = (String) headerAccessor.getSessionAttributes().put("room_id", roomId);
         if (currentRoomId != null) {
             ChatMessage leaveChatMessage = new ChatMessage();
@@ -54,7 +56,6 @@ public class ChatWsController {
         messagingTemplate.convertAndSend(format("/channel/%s", roomId), chatMessage);
 
         List<ChatMessage> chatMessages = messageService.getAllMessages();
-//        messages.forEach(message1 -> messagingTemplate.convertAndSend(format("/channel/%s", roomId), message));
     }
 
 

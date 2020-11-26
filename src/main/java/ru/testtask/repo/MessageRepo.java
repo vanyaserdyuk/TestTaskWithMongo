@@ -6,5 +6,5 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import ru.testtask.model.ChatMessage;
 
 public interface MessageRepo extends MongoRepository<ChatMessage, String> {
-    Page<ChatMessage> findByRoomId(Pageable pageable, String roomId);
+    Page<ChatMessage> findByRoomName(Pageable pageable, String roomName);
 }

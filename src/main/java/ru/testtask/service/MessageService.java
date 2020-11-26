@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import ru.testtask.model.ChatMessage;
 import ru.testtask.repo.MessageRepo;
 
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -16,6 +17,8 @@ public class MessageService {
     private MessageRepo messageRepo;
 
     public ChatMessage addMessage(ChatMessage chatMessage){
+        chatMessage.setDate(LocalTime.now());
+
         return messageRepo.insert(chatMessage);
     }
 
@@ -24,6 +27,6 @@ public class MessageService {
     }
 
     public Page<ChatMessage> findForRoom(Pageable pageable, String roomId){
-        return messageRepo.findByRoomId(pageable, roomId);
+        return messageRepo.findByRoomName(pageable, roomId);
     }
 }

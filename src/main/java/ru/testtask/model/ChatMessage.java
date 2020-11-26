@@ -6,6 +6,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import java.time.LocalTime;
+import java.util.Date;
 
 @Document(collection = "chatMessages")
 @Data
@@ -15,37 +17,14 @@ public class ChatMessage {
     private MessageType type;
     private String content;
     private String sender;
+    private LocalTime date;
 
-    @ManyToOne
-    private String roomId;
+
+    private String roomName;
 
     public enum MessageType {
         CHAT,
         JOIN,
         LEAVE
-    }
-
-    public MessageType getType() {
-        return type;
-    }
-
-    public void setType(MessageType type) {
-        this.type = type;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    public String getSender() {
-        return sender;
-    }
-
-    public void setSender(String sender) {
-        this.sender = sender;
     }
 }

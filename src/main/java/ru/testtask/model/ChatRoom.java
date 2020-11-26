@@ -3,7 +3,9 @@ package ru.testtask.model;
 import lombok.*;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Document(collection = "chatRooms")
@@ -16,8 +18,14 @@ public class ChatRoom {
     private String id;
 
     @NonNull
-    private String roomId;
+    private String roomName;
 
     @DBRef(lazy = true)
-    private List<ChatMessage> chatMessages;
+    @Field("chatMessages")
+    private List<ChatMessage> chatMessages = new ArrayList<>();
+
+
+    public void addMessage(ChatMessage chatMessage){
+        chatMessages.add(chatMessage);
+    }
 }

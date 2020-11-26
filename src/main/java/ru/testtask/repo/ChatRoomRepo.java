@@ -6,5 +6,5 @@ import ru.testtask.model.ChatRoom;
 
 @Repository
 public interface ChatRoomRepo extends MongoRepository<ChatRoom, String> {
-    ChatRoom findByRoomId(String roomId);
+    ChatRoom findByRoomName(String roomId);
 }

@@ -15,8 +15,9 @@ var roomIdDisplay = document.querySelector('#room-id-display');
 var stompClient = null;
 var currentSubscription;
 var username = null;
-var roomId = null;
+var roomName = null;
 var topic = null;
+localStorage.page = 0;
 
 function connect(event) {
     username = nameInput.val().trim();
@@ -34,14 +35,14 @@ function connect(event) {
 
 
 function enterRoom(newRoomId) {
-    roomId = newRoomId;
-    roomIdDisplay.textContent = roomId;
+    roomName = newRoomId;
+    roomIdDisplay.textContent = roomName;
     topic = `/app/chat/${newRoomId}`;
 
     if (currentSubscription) {
         currentSubscription.unsubscribe();
     }
-    currentSubscription = stompClient.subscribe(`/channel/${roomId}`, onMessageReceived);
+    currentSubscription = stompClient.subscribe(`/channel/${roomName}`, onMessageReceived);
 
     stompClient.send(`${topic}/addUser`,
         {},
@@ -72,7 +73,7 @@ function sendMessage(event) {
             sender: username,
             content: messageInput.value,
             type: 'CHAT',
-            roomId: roomId
+            roomName: roomName
         };
         stompClient.send(`${topic}/sendMessage`, {}, JSON.stringify(chatMessage));
     }
@@ -82,7 +83,26 @@ function sendMessage(event) {
 
 function onMessageReceived(payload) {
     var message = JSON.parse(payload.body);
+    var messageElement = addMessage(message);
+    messageArea.appendChild(messageElement);
+    messageArea.scrollTop = messageArea.scrollHeight;
+}
 
+function getHistory(){
+    $.ajax({
+        url: 'chat/' + roomName + '/getMessages/' + localStorage.page,
+        method: 'GET'
+    }).done(({content}) => {content.forEach(
+        function sendHistory(currentContent){
+            var messageElement = addMessage(currentContent);
+            messageArea.prepend(messageElement);
+            messageArea.scrollTop = messageArea.scrollHeight;
+        }
+    )})
+    localStorage.page = ++localStorage.page;
+}
+
+function addMessage(message){
     var messageElement = document.createElement('li');
 
     if (message.type == 'JOIN') {
@@ -113,12 +133,7 @@ function onMessageReceived(payload) {
 
     messageElement.appendChild(textElement);
 
-    messageArea.appendChild(messageElement);
-    messageArea.scrollTop = messageArea.scrollHeight;
-}
-
-function getHistory(){
-    var
+    return messageElement;
 }
 
  $(document).ready(function() {
