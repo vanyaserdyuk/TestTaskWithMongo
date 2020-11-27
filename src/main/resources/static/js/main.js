@@ -108,6 +108,12 @@ function addMessage(message){
     if (message.type == 'JOIN') {
         messageElement.classList.add('event-message');
         message.content = message.sender + ' joined!';
+    }
+    else if (message.type == 'ERROR') {
+        connectingElement.classList.remove('hidden');
+        connectingElement.textContent = 'The maximum length of the message is 1000 symbols!';
+        connectingElement.style.color = 'red';
+        message.content = '';
     } else if (message.type == 'LEAVE') {
         messageElement.classList.add('event-message');
         message.content = message.sender + ' left!';

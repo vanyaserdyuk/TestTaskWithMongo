@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import ru.testtask.model.ChatMessage;
+import ru.testtask.service.ChatRoomService;
 import ru.testtask.service.MessageService;
 
 
@@ -20,11 +21,14 @@ public class ChatController {
     @Autowired
     private MessageService messageService;
 
-    @GetMapping("/chat/{roomId}/getMessages/{page}")
-    public ResponseEntity<?> getMessageList(@PathVariable String roomId, @PathVariable int page){
+    @Autowired
+    private ChatRoomService chatRoomService;
+
+    @GetMapping("/chat/{roomName}/getMessages/{page}")
+    public ResponseEntity<?> getMessageList(@PathVariable String roomName, @PathVariable int page){
 
         Pageable pageable = PageRequest.of(page, 15, Sort.by(Sort.Direction.DESC, "date"));
-        Page<ChatMessage> chatMessages = messageService.findForRoom(pageable, roomId);
+        Page<ChatMessage> chatMessages = messageService.findForRoom(pageable, chatRoomService.findByRoomName(roomName));
         return new ResponseEntity<Page<ChatMessage>>(chatMessages, HttpStatus.OK);
     }
 

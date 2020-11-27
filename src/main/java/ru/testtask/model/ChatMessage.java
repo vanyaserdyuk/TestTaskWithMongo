@@ -1,13 +1,13 @@
 package ru.testtask.model;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Data;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import java.time.LocalTime;
-import java.util.Date;
 
 @Document(collection = "chatMessages")
 @Data
@@ -19,12 +19,14 @@ public class ChatMessage {
     private String sender;
     private LocalTime date;
 
-
-    private String roomName;
+    @DBRef(lazy = true)
+    @JsonAlias("roomName")
+    private ChatRoom chatRoom;
 
     public enum MessageType {
         CHAT,
         JOIN,
-        LEAVE
+        LEAVE,
+        ERROR
     }
 }

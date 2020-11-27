@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.testtask.model.ChatMessage;
+import ru.testtask.model.ChatRoom;
 import ru.testtask.repo.MessageRepo;
 
 import java.time.LocalTime;
@@ -26,7 +27,7 @@ public class MessageService {
         return messageRepo.findAll();
     }
 
-    public Page<ChatMessage> findForRoom(Pageable pageable, String roomId){
-        return messageRepo.findByRoomName(pageable, roomId);
+    public Page<ChatMessage> findForRoom(Pageable pageable, ChatRoom roomName){
+        return messageRepo.findByChatRoom(pageable, roomName);
     }
 }
