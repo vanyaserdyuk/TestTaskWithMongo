@@ -61,15 +61,17 @@ public class FileController {
     }
 
     @GetMapping("/find/{regex}")
-    public ResponseEntity<List<FileData>> searchFileWithRegex(@PathVariable String regex){
-        return new ResponseEntity<>(fileService.searchByRegex(regex), HttpStatus.OK);
+    public ResponseEntity<List<FileDTO>> searchFileWithRegex(@PathVariable String regex){
+        List<FileData> fileData = fileService.searchByRegex(regex);
+        List<FileDTO> fileDTOS = fileData.stream().map(user -> modelMapper.map(fileData, FileDTO.class)).collect(Collectors.toList());
+        return new ResponseEntity<>(fileDTOS, HttpStatus.OK);
     }
 
     @GetMapping("/find/dir/{directory}")
-    public ResponseEntity<List<FileData>> getAllFiles(@PathVariable String directory){
+    public ResponseEntity<List<FileDTO>> getAllFiles(@PathVariable String directory){
         List<FileData> fileList = fileService.getFileListFromDirectory(directory);
         List<FileDTO> fileDTOS = fileList.stream().map(user -> modelMapper.map(fileList, FileDTO.class)).collect(Collectors.toList());
-        return new ResponseEntity<>(fileList, HttpStatus.OK);
+        return new ResponseEntity<>(fileDTOS, HttpStatus.OK);
     }
 
     @PutMapping("/{id}/move/{directory}")
@@ -81,7 +83,7 @@ public class FileController {
             return new ResponseEntity<>(String.format("File with the same name is already exists in directory %s", directory),
                     HttpStatus.CONFLICT);
         }
-        return new ResponseEntity<>(modelMapper.map(modelMapper.map(fileService.findFileById(id), FileDTO.class), FileDTO.class)
+        return new ResponseEntity<>(modelMapper.map(fileService.findFileById(id).get(), FileDTO.class)
                 ,HttpStatus.OK);
     }
 
@@ -90,7 +92,6 @@ public class FileController {
                                            @PathVariable String directory) throws IOException {
 
         fileService.copyFile(id, directory);
-
         return new ResponseEntity<>(String.format("File was copied to %s", directory), HttpStatus.OK);
     }
 

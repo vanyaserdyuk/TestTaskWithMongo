@@ -65,8 +65,8 @@ public class FileService {
             if (getFileSize(url) > storageMaxSize)
                 throw new FileIsToLargeException("This file is too large!");
 
-            Path temporaryPath = Files.createTempDirectory("temporaryPath").resolve(uploadFileDTO.getFileName());
             String filename = UUID.randomUUID().toString() + "." + FilenameUtils.getExtension(url.toString());
+            Path temporaryPath = Files.createTempDirectory("temporaryPath").resolve(filename);
             Path path = Paths.get(storageRoot + File.separator + filename);
             FileUtils.copyURLToFile(url, temporaryPath.toFile());
 
@@ -97,7 +97,7 @@ public class FileService {
     public void removeFile(String id){
         Optional<FileData> fileData = fileDataRepo.findById(id);
         try {
-            Files.deleteIfExists(Paths.get(fileData.get().getDirectory() + File.separator + fileData.get().getOriginalFilename()));
+            Files.deleteIfExists(Paths.get(fileData.get().getDirectory() + File.separator + fileData.get().getFilename()));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -114,11 +114,9 @@ public class FileService {
 
     public FileData moveFile(String id, String directory) {
         Path destDirectory = Paths.get(storageRoot + File.separator + directory);
-        Optional<FileData> optionalFileData = fileDataRepo.findById(id);
 
-        FileData fileData = optionalFileData.get();
-
-        Path destination = Paths.get(destDirectory + File.separator + fileData.getFilename());
+        Path destination = getDestination(id, destDirectory);
+        FileData fileData = fileDataRepo.findById(id).get();
 
         try {
             if (!Files.exists(destDirectory)) {
@@ -141,11 +139,9 @@ public class FileService {
 
     public void copyFile(String id, String directory) throws IOException {
         Path destDirectory = Paths.get(storageRoot + File.separator + directory);
-        Optional<FileData> optionalFileData = fileDataRepo.findById(id);
 
-        FileData fileData = optionalFileData.get();
-
-        Path destination = destDirectory.resolve(fileData.getFilename());
+        Path destination = getDestination(id, destDirectory);
+        FileData fileData = fileDataRepo.findById(id).get();
 
         try {
             if (!Files.exists(destDirectory)) {
@@ -186,5 +182,13 @@ public class FileService {
 
     public void deleteAllFiles(){
         fileDataRepo.deleteAll();
+    }
+
+    public Path getDestination(String id, Path destDirectory){
+        FileData fileData;
+        Optional<FileData> optionalFileData = fileDataRepo.findById(id);
+        if (optionalFileData.isPresent()) fileData = optionalFileData.get();
+        else return null;
+        return destDirectory.resolve(fileData.getFilename());
     }
 }
