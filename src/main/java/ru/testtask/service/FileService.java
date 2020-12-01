@@ -1,25 +1,40 @@
 package ru.testtask.service;
 
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.stereotype.Service;
+import ru.testtask.dto.UploadFileDTO;
+import ru.testtask.exception.FileIsToLargeException;
+import ru.testtask.exception.NameAlreadyExistsException;
 import ru.testtask.model.FileData;
 import ru.testtask.repo.FileDataRepo;
 
 import javax.annotation.PostConstruct;
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
-public class FileService extends SimpleFileVisitor<Path> {
+@Slf4j
+public class FileService {
 
-    @Value("${upload.path}")
-    private String uploadPath;
+    @Value("${storage.root}")
+    private String storageRoot;
+
+    @Value("${storage.maxSize}")
+    private long storageMaxSize;
 
     private final FileDataRepo fileDataRepo;
 
@@ -33,115 +48,138 @@ public class FileService extends SimpleFileVisitor<Path> {
     @PostConstruct
     public void init(){
         mongoTemplate.indexOps("files").ensureIndex(new Index("filename", Sort.Direction.ASC).unique());
-    }
-
-    public void addFile(Path path){
-        try {
-            FileData fileData = FileData.builder().originalFilename(path.toString())
-                    .filename(path.getFileName().toString())
-                    .size(Files.size(path))
-                    .type(Files.probeContentType(path))
-                    .directory(uploadPath)
-                    .build();
-
-            fileDataRepo.insert(fileData);
-        } catch (IOException e) {
-            e.printStackTrace();
+        mongoTemplate.indexOps("files").ensureIndex(new Index("originalFilename", Sort.Direction.ASC).unique());
+        if (Files.notExists(Paths.get(storageRoot))) {
+            try {
+                Files.createDirectory(Paths.get(storageRoot));
+            } catch (IOException e) {
+                log.info("Exception");
+            }
         }
     }
 
-    public List<Path> getFileListFromDirectory(Path path) throws IOException {
+    public FileData addFile(UploadFileDTO uploadFileDTO) {
+        try {
+            URL url = new URL(uploadFileDTO.getFileUrl());
 
-        List<Path> paths = new ArrayList<>();
+            if (getFileSize(url) > storageMaxSize)
+                throw new FileIsToLargeException("This file is too large!");
 
-        Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                if (!Files.isDirectory(file))
-                paths.add(file);
-                return super.visitFile(path, attrs);
-            }
-        });
+            Path temporaryPath = Files.createTempDirectory("temporaryPath").resolve(uploadFileDTO.getFileName());
+            String filename = UUID.randomUUID().toString() + "." + FilenameUtils.getExtension(url.toString());
+            Path path = Paths.get(storageRoot + File.separator + filename);
+            FileUtils.copyURLToFile(url, temporaryPath.toFile());
 
-        return paths;
+
+            FileData fileData = FileData.builder().originalFilename(uploadFileDTO.getFileName())
+                    .filename(filename)
+                    .size(Files.size(temporaryPath))
+                    .type(Files.probeContentType(path))
+                    .directory(storageRoot)
+                    .build();
+
+            fileDataRepo.insert(fileData);
+            Files.move(temporaryPath, path);
+            temporaryPath.toFile().deleteOnExit();
+            return fileData;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
-    public void removeFile(String filename){
-        fileDataRepo.deleteByFilename(filename);
+    public List<FileData> getFileListFromDirectory(String directory){
+        String regex = File.separator + directory + File.separator;
+        return fileDataRepo.findFileDataByRegexpDirectory(regex);
     }
 
-    public FileData findByFilename(String filename) throws IOException {
-        Files.walkFileTree(Paths.get(uploadPath), new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                if (file.getFileName().toString().equals(filename))
-                    Files.delete(file);
-                return super.visitFile(file, attrs);
-            }
-        });
+    public void removeFile(String id){
+        Optional<FileData> fileData = fileDataRepo.findById(id);
+        try {
+            Files.deleteIfExists(Paths.get(fileData.get().getDirectory() + File.separator + fileData.get().getOriginalFilename()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        fileDataRepo.deleteById(id);
+    }
+
+    public FileData findByFilename(String filename){
         return fileDataRepo.findByFilename(filename);
     }
 
     public List<FileData> searchByRegex(String regex){
-        List<FileData> files = fileDataRepo.findAll();
-        List<FileData> appropriateFiles = new ArrayList<>();
-
-        for (FileData fileData : files){
-            if (fileData.getFilename().matches("(.*)" + regex + "(.*)"))
-                appropriateFiles.add(fileData);
-        }
-
-        return appropriateFiles;
+        return fileDataRepo.findFileDataByRegexpFilename(regex);
     }
 
-    public void moveFile(String filename, Path destination) throws IOException {
+    public FileData moveFile(String id, String directory) {
+        Path destDirectory = Paths.get(storageRoot + File.separator + directory);
+        Optional<FileData> optionalFileData = fileDataRepo.findById(id);
 
-        if (!Files.exists(destination)){
-            Files.createDirectory(destination);
-        }
+        FileData fileData = optionalFileData.get();
 
-        Files.walkFileTree(Paths.get(uploadPath), new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                if (file.getFileName().toString().equals(filename)) {
-                    Files.move(file, destination.resolve(file.getFileName()));
-                }
-                return super.visitFile(file, attrs);
+        Path destination = Paths.get(destDirectory + File.separator + fileData.getFilename());
+
+        try {
+            if (!Files.exists(destDirectory)) {
+                Files.createDirectory(destDirectory);
             }
-        });
 
-        FileData fileData = fileDataRepo.findByFilename(filename);
-        fileData.setDirectory(destination.toString());
-        fileDataRepo.save(fileData);
+            if (Files.exists(destination)) {
+                throw new NameAlreadyExistsException("Already exists");
+            }
+
+            Files.move(Paths.get(fileData.getDirectory() + File.separator + fileData.getFilename()),
+                    destination);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        fileData.setDirectory(destDirectory.toString());
+        return fileDataRepo.save(fileData);
     }
 
-    public void copyFile(String filename, Path destination) throws IOException {
-        String newFilename;
-        int i = 0;
+    public void copyFile(String id, String directory) throws IOException {
+        Path destDirectory = Paths.get(storageRoot + File.separator + directory);
+        Optional<FileData> optionalFileData = fileDataRepo.findById(id);
 
-        if (!Files.exists(destination)){
-            Files.createDirectory(destination);
+        FileData fileData = optionalFileData.get();
+
+        Path destination = destDirectory.resolve(fileData.getFilename());
+
+        try {
+            if (!Files.exists(destDirectory)) {
+                Files.createDirectory(destDirectory);
+            }
+
+            Files.copy(Paths.get(fileData.getDirectory() + File.separator + fileData.getFilename()),
+                    destination);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
-        FileData fileData = fileDataRepo.findByFilename(filename);
-
-        do {
-            newFilename = fileData.getFilename() + "(" + i + ")";
-            i++;
-        }
-        while (fileDataRepo.findByFilename(newFilename) != null);
-
-        fileData.setFilename(newFilename);
+        String newFileName = fileData.getOriginalFilename() + " (copied) " + Math.random() * 100;
+        fileData.setFilename(UUID.randomUUID().toString());
+        fileData.setOriginalFilename(newFileName);
         fileDataRepo.insert(fileData);
+    }
 
-        Files.walkFileTree(Paths.get(uploadPath), new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                if (file.getFileName().toString().equals(filename)) {
-                    Files.copy(file, destination.resolve(file.getFileName()));
-                }
-                return super.visitFile(file, attrs);
+    public Optional<FileData> findFileById(String id){
+        return fileDataRepo.findById(id);
+    }
+
+    public long getFileSize(URL url) {
+        HttpURLConnection conn = null;
+        try {
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("HEAD");
+            return conn.getContentLengthLong();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
             }
-        });
+        }
     }
 }

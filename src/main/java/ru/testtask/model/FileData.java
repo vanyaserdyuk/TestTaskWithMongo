@@ -21,6 +21,7 @@ public class FileData {
     private String filename;
     private long size;
     private String type;
+    @Indexed(unique = true)
     private String originalFilename;
     private String directory;
 }
