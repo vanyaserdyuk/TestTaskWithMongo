@@ -161,6 +161,7 @@ public class FileService {
         String newFileName = fileData.getOriginalFilename() + " (copied) " + Math.random() * 100;
         fileData.setFilename(UUID.randomUUID().toString());
         fileData.setOriginalFilename(newFileName);
+        fileData.setId(null);
         fileDataRepo.insert(fileData);
     }
 
@@ -181,5 +182,9 @@ public class FileService {
                 conn.disconnect();
             }
         }
+    }
+
+    public void deleteAllFiles(){
+        fileDataRepo.deleteAll();
     }
 }

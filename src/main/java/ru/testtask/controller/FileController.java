@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.testtask.dto.FileDTO;
 import ru.testtask.dto.UploadFileDTO;
+import ru.testtask.dto.UserDTO;
 import ru.testtask.exception.FileIsToLargeException;
 import ru.testtask.exception.NameAlreadyExistsException;
 import ru.testtask.model.FileData;
@@ -22,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -66,6 +68,7 @@ public class FileController {
     @GetMapping("/find/dir/{directory}")
     public ResponseEntity<List<FileData>> getAllFiles(@PathVariable String directory){
         List<FileData> fileList = fileService.getFileListFromDirectory(directory);
+        List<FileDTO> fileDTOS = fileList.stream().map(user -> modelMapper.map(fileList, FileDTO.class)).collect(Collectors.toList());
         return new ResponseEntity<>(fileList, HttpStatus.OK);
     }
 

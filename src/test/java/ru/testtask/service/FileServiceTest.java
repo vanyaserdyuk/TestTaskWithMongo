@@ -1,10 +1,13 @@
 package ru.testtask.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
@@ -14,10 +17,15 @@ import ru.testtask.config.TestConfig;
 import ru.testtask.dto.UploadFileDTO;
 import ru.testtask.model.FileData;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 @Slf4j
 @RunWith(SpringRunner.class)
@@ -26,26 +34,68 @@ import static org.junit.Assert.assertNotNull;
 @ActiveProfiles("test")
 public class FileServiceTest {
 
+    @Value("${storage.root}")
+    private String storageRoot;
+
     @Autowired
     private FileService fileService;
 
-    @Before
-    public void buildTestData(){
-        FileData fileData = FileData.builder().originalFilename("a")
-                .filename("b")
-                .size(1)
-                .type("png")
-                .directory("dir")
-                .build();
+    @After
+    public void clearDb() throws IOException {
+        fileService.deleteAllFiles();
+        FileUtils.cleanDirectory(Paths.get(storageRoot).toFile());
     }
 
     @Test
     public void addFileTest(){
-        UploadFileDTO uploadFileDTO = UploadFileDTO.builder().fileUrl("1").fileName("b").build();
+        UploadFileDTO uploadFileDTO = UploadFileDTO.builder().fileUrl("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Sunset02.jpg/220px-Sunset02.jpg")
+                .fileName("b").build();
         FileData fileData = fileService.addFile(uploadFileDTO);
         assertNotNull(fileData.getFilename());
         assertEquals("b", fileData.getOriginalFilename());
+        assertEquals(storageRoot, fileData.getDirectory());
+        assertEquals("image/jpeg", fileData.getType());
+        assertNotNull(fileData.getId());
+        assertEquals(10158, fileData.getSize());
+    }
 
+    @Test
+    public void removeFileTest(){
+        UploadFileDTO uploadFileDTO = UploadFileDTO.builder().fileUrl("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Sunset02.jpg/220px-Sunset02.jpg")
+                .fileName("b").build();
+        FileData fileData = fileService.addFile(uploadFileDTO);
+        fileService.removeFile(fileData.getId());
+        assertEquals(Optional.empty(), fileService.findFileById(fileData.getId()));
+    }
+
+    @Test
+    public void moveFileTest(){
+        UploadFileDTO uploadFileDTO = UploadFileDTO.builder().fileUrl("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Sunset02.jpg/220px-Sunset02.jpg")
+                .fileName("b").build();
+        FileData fileData = fileService.addFile(uploadFileDTO);
+        fileData = fileService.moveFile(fileData.getId(), "a");
+        assertFalse(Files.exists(Paths.get(storageRoot + File.separator + fileData.getFilename())));
+        assertTrue(Files.exists(Paths.get(storageRoot + File.separator +
+                "a" + File.separator + fileData.getFilename())));
+        assertEquals("C:\\Files\\a", fileData.getDirectory());
+    }
+
+    @Test
+    public void copyFileTest() throws IOException {
+        UploadFileDTO uploadFileDTO = UploadFileDTO.builder().fileUrl("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Sunset02.jpg/220px-Sunset02.jpg")
+                .fileName("test").build();
+        FileData fileData = fileService.addFile(uploadFileDTO);
+        fileService.copyFile(fileData.getId(), "dir1");
+        assertTrue(Files.exists(Paths.get(storageRoot + File.separator + "dir1")));
+        assertTrue(Files.exists(Paths.get(storageRoot + File.separator + "dir1" +
+                File.separator + fileData.getFilename())));
+        assertEquals(2, fileService.searchByRegex("test").size());
+    }
+
+    @Test
+    public void getFileSizeTest() throws MalformedURLException {
+        URL url = new URL("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Sunset02.jpg/220px-Sunset02.jpg");
+        assertEquals(10158, fileService.getFileSize(url));
     }
 
 
