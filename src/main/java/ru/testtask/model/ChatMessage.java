@@ -22,11 +22,4 @@ public class ChatMessage {
     @DBRef(lazy = true)
     @JsonAlias("roomName")
     private ChatRoom chatRoom;
-
-    public enum MessageType {
-        CHAT,
-        JOIN,
-        LEAVE,
-        ERROR
-    }
 }

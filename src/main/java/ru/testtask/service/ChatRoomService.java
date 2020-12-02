@@ -9,22 +9,26 @@ import ru.testtask.model.ChatRoom;
 import ru.testtask.repo.ChatRoomRepo;
 
 import javax.annotation.PostConstruct;
+import java.util.List;
 
 @Service
 public class ChatRoomService {
 
-    @Autowired
-    private ChatRoomRepo chatRoomRepo;
+    private final ChatRoomRepo chatRoomRepo;
 
-    @Autowired
-    private MongoTemplate mongoTemplate;
+    private final MongoTemplate mongoTemplate;
+
+    public ChatRoomService(ChatRoomRepo chatRoomRepo, MongoTemplate mongoTemplate) {
+        this.chatRoomRepo = chatRoomRepo;
+        this.mongoTemplate = mongoTemplate;
+    }
 
     @PostConstruct
     public void init(){
         mongoTemplate.indexOps("chatRooms").ensureIndex(new Index("roomName", Sort.Direction.ASC).unique());
     }
 
-    public ChatRoom addChatRoom(String roomName){
+    public ChatRoom addChatRoomIfNotExists(String roomName){
         if (chatRoomRepo.findByRoomName(roomName) == null) {
             return chatRoomRepo.insert(ChatRoom.builder().roomName(roomName).build());
         }
@@ -33,6 +37,10 @@ public class ChatRoomService {
 
     public ChatRoom findByRoomName(String roomName){
         return chatRoomRepo.findByRoomName(roomName);
+    }
+
+    public List<ChatRoom> getAllRooms(){
+        return chatRoomRepo.findAll();
     }
 
 }

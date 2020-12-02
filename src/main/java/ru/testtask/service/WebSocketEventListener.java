@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import ru.testtask.model.ChatMessage;
+import ru.testtask.model.MessageType;
 
 import static java.lang.String.format;
 
@@ -21,7 +22,7 @@ public class WebSocketEventListener {
 
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
-        log.info("Received a new web socket connection");
+        log.debug("Received a new web socket connection");
     }
 
     @EventListener
@@ -31,10 +32,10 @@ public class WebSocketEventListener {
         String username = (String) headerAccessor.getSessionAttributes().get("username");
         String roomId = (String) headerAccessor.getSessionAttributes().get("room_id");
         if (username != null) {
-            log.info("User Disconnected: " + username);
+            log.debug("User Disconnected: " + username);
 
             ChatMessage chatMessage = new ChatMessage();
-            chatMessage.setType(ChatMessage.MessageType.LEAVE);
+            chatMessage.setType(MessageType.LEAVE);
             chatMessage.setSender(username);
 
             messagingTemplate.convertAndSend(format("/channel/%s", roomId), chatMessage);

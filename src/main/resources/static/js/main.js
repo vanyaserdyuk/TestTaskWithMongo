@@ -102,6 +102,16 @@ function getHistory(){
     localStorage.page = ++localStorage.page;
 }
 
+function getRooms(){
+    $.ajax({
+        url: 'chat/getRooms',
+        method: 'GET',
+        success: function (data) {
+            console.log(data);
+        }
+    }).done();
+}
+
 function addMessage(message){
     var messageElement = document.createElement('li');
 

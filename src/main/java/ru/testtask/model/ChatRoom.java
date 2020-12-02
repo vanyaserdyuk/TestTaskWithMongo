@@ -4,6 +4,8 @@ import lombok.*;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import javax.persistence.Id;
+
 @Document(collection = "chatRooms")
 @Data
 @RequiredArgsConstructor
@@ -11,6 +13,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ChatRoom {
+    @Id
     private String id;
 
     @NonNull
