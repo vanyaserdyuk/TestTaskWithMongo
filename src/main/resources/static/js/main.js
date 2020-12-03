@@ -105,11 +105,9 @@ function getHistory(){
 function getRooms(){
     $.ajax({
         url: 'chat/getRooms',
-        method: 'GET',
-        success: function (data) {
-            console.log(data);
-        }
-    }).done();
+        method: 'GET'
+
+    }).done((data) => data.forEach(({roomName}) => $('#select').append('<option>' + roomName + '</option>')));
 }
 
 function addMessage(message){
