@@ -1,9 +1,7 @@
 package ru.testtask.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,8 +14,10 @@ import ru.testtask.Application;
 import ru.testtask.config.TestConfig;
 import ru.testtask.dto.UploadFileDTO;
 import ru.testtask.model.FileData;
+import ru.testtask.util.TestUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -40,17 +40,19 @@ public class FileServiceTest {
     @Autowired
     private FileService fileService;
 
+    @Autowired
+    private TestUtils testUtils;
+
     @After
     public void clearDb() throws IOException {
-        fileService.deleteAllFiles();
-        FileUtils.cleanDirectory(Paths.get(storageRoot).toFile());
+        testUtils.deleteAllFiles();
     }
 
     @Test
     public void addFileTest(){
         UploadFileDTO uploadFileDTO = UploadFileDTO.builder().fileUrl("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Sunset02.jpg/220px-Sunset02.jpg")
                 .fileName("b").build();
-        FileData fileData = fileService.addFile(uploadFileDTO);
+        FileData fileData = fileService.uploadFile(uploadFileDTO);
         assertNotNull(fileData.getFilename());
         assertEquals("b", fileData.getOriginalFilename());
         assertEquals(storageRoot, fileData.getDirectory());
@@ -60,10 +62,10 @@ public class FileServiceTest {
     }
 
     @Test
-    public void removeFileTest(){
+    public void removeFileTest() throws FileNotFoundException {
         UploadFileDTO uploadFileDTO = UploadFileDTO.builder().fileUrl("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Sunset02.jpg/220px-Sunset02.jpg")
                 .fileName("b").build();
-        FileData fileData = fileService.addFile(uploadFileDTO);
+        FileData fileData = fileService.uploadFile(uploadFileDTO);
         fileService.removeFile(fileData.getId());
         assertEquals(Optional.empty(), fileService.findFileById(fileData.getId()));
     }
@@ -72,7 +74,7 @@ public class FileServiceTest {
     public void moveFileTest(){
         UploadFileDTO uploadFileDTO = UploadFileDTO.builder().fileUrl("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Sunset02.jpg/220px-Sunset02.jpg")
                 .fileName("b").build();
-        FileData fileData = fileService.addFile(uploadFileDTO);
+        FileData fileData = fileService.uploadFile(uploadFileDTO);
         fileData = fileService.moveFile(fileData.getId(), "a");
         assertFalse(Files.exists(Paths.get(storageRoot + File.separator + fileData.getFilename())));
         assertTrue(Files.exists(Paths.get(storageRoot + File.separator +
@@ -84,7 +86,7 @@ public class FileServiceTest {
     public void copyFileTest() throws IOException {
         UploadFileDTO uploadFileDTO = UploadFileDTO.builder().fileUrl("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Sunset02.jpg/220px-Sunset02.jpg")
                 .fileName("test").build();
-        FileData fileData = fileService.addFile(uploadFileDTO);
+        FileData fileData = fileService.uploadFile(uploadFileDTO);
         fileService.copyFile(fileData.getId(), "dir1");
         assertTrue(Files.exists(Paths.get(storageRoot + File.separator + "dir1")));
         assertTrue(Files.exists(Paths.get(storageRoot + File.separator + "dir1" +

@@ -3,26 +3,20 @@ package ru.testtask.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.testtask.dto.FileDTO;
 import ru.testtask.dto.UploadFileDTO;
-import ru.testtask.dto.UserDTO;
 import ru.testtask.exception.FileIsToLargeException;
 import ru.testtask.exception.NameAlreadyExistsException;
 import ru.testtask.model.FileData;
 import ru.testtask.service.FileService;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.List;
-import java.util.Optional;
+
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -42,7 +36,7 @@ public class FileController {
     @PostMapping
     public ResponseEntity<?> uploadFile(@RequestBody UploadFileDTO uploadFileDTO){
         try {
-            FileData fileData = fileService.addFile(uploadFileDTO);
+            FileData fileData = fileService.uploadFile(uploadFileDTO);
             return new ResponseEntity<>(modelMapper.map(fileData, FileDTO.class), HttpStatus.OK);
         }
         catch (FileIsToLargeException e){
@@ -52,17 +46,18 @@ public class FileController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> removeFile(@PathVariable String id){
-         if (fileService.findFileById(id).isPresent()) {
-             fileService.removeFile(id);
-         }
-         else return new ResponseEntity<>(String.format("File with ID %s does not found", id),
-                 HttpStatus.NOT_FOUND);
-         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        try {
+            fileService.removeFile(id);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+        catch (FileNotFoundException e){
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
     }
 
-    @GetMapping("/find/{regex}")
-    public ResponseEntity<List<FileDTO>> searchFileWithRegex(@PathVariable String regex){
-        List<FileData> fileData = fileService.searchByRegex(regex);
+    @GetMapping("/find/regexp{regexp}")
+    public ResponseEntity<List<FileDTO>> searchFileWithRegex(@PathVariable String regexp){
+        List<FileData> fileData = fileService.searchByRegex(regexp);
         List<FileDTO> fileDTOS = fileData.stream().map(user -> modelMapper.map(fileData, FileDTO.class)).collect(Collectors.toList());
         return new ResponseEntity<>(fileDTOS, HttpStatus.OK);
     }
@@ -87,7 +82,7 @@ public class FileController {
                 ,HttpStatus.OK);
     }
 
-    @PostMapping("{id}/copy/{directory}")
+    @PostMapping("/{id}/copy/{directory}")
     public ResponseEntity<String> copyFile(@PathVariable String id,
                                            @PathVariable String directory) throws IOException {
 
@@ -95,23 +90,9 @@ public class FileController {
         return new ResponseEntity<>(String.format("File was copied to %s", directory), HttpStatus.OK);
     }
 
-    @GetMapping("/download/{id}")
-    public void getFile(@PathVariable("id") String id,
+    @GetMapping("/{id}/download")
+    public void getFileContent(@PathVariable("id") String id,
             HttpServletResponse response) {
-            FileData fileData;
-
-        try {
-            Optional<FileData> optionalFileData = fileService.findFileById(id);
-            if (optionalFileData.isPresent()){
-                fileData = optionalFileData.get();
-                InputStream is = new FileInputStream(fileData.getDirectory() + File.separator + fileData.getFilename());
-                IOUtils.copy(is, response.getOutputStream());
-                response.flushBuffer();
-            }
-
-        } catch (IOException ex) {
-            log.info("Error writing file to output stream. Filename was '{}'", id, ex);
-            throw new RuntimeException("IOError writing file to output stream");
-        }
+            fileService.getFileContent(id, response);
     }
 }

@@ -3,11 +3,13 @@ package ru.testtask.service;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.stereotype.Service;
+import org.springframework.util.FileCopyUtils;
 import ru.testtask.dto.UploadFileDTO;
 import ru.testtask.exception.FileIsToLargeException;
 import ru.testtask.exception.NameAlreadyExistsException;
@@ -15,8 +17,8 @@ import ru.testtask.model.FileData;
 import ru.testtask.repo.FileDataRepo;
 
 import javax.annotation.PostConstruct;
-import java.io.File;
-import java.io.IOException;
+import javax.servlet.http.HttpServletResponse;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
@@ -33,8 +35,12 @@ public class FileService {
     @Value("${storage.root}")
     private String storageRoot;
 
-    @Value("${storage.maxSize}")
-    private long storageMaxSize;
+    private Path storageRootPath;
+
+    private Path temporaryDir;
+
+    @Value("${storage.file.max-size.mb:500}")
+    private long fileMaxSizeMb;
 
     private final FileDataRepo fileDataRepo;
 
@@ -49,38 +55,34 @@ public class FileService {
     public void init(){
         mongoTemplate.indexOps("files").ensureIndex(new Index("filename", Sort.Direction.ASC).unique());
         mongoTemplate.indexOps("files").ensureIndex(new Index("originalFilename", Sort.Direction.ASC).unique());
-        if (Files.notExists(Paths.get(storageRoot))) {
+        storageRootPath = Paths.get(storageRoot);
+        temporaryDir = Paths.get(storageRoot + File.separator + "temp");
+        if (Files.notExists(storageRootPath)){
             try {
-                Files.createDirectory(Paths.get(storageRoot));
+                Files.createDirectories(storageRootPath);
             } catch (IOException e) {
-                log.info("Exception");
+                log.error(String.format("It is impossible to create storage root directory : %s", storageRoot), e);
             }
         }
     }
 
-    public FileData addFile(UploadFileDTO uploadFileDTO) {
+    public FileData uploadFile(UploadFileDTO uploadFileDTO) {
         try {
             URL url = new URL(uploadFileDTO.getFileUrl());
-
-            if (getFileSize(url) > storageMaxSize)
-                throw new FileIsToLargeException("This file is too large!");
-
             String filename = UUID.randomUUID().toString() + "." + FilenameUtils.getExtension(url.toString());
-            Path temporaryPath = Files.createTempDirectory("temporaryPath").resolve(filename);
-            Path path = Paths.get(storageRoot + File.separator + filename);
-            FileUtils.copyURLToFile(url, temporaryPath.toFile());
-
+            Path path = storageRootPath.resolve(filename);
+            File tempFile = getFileSize(url);
 
             FileData fileData = FileData.builder().originalFilename(uploadFileDTO.getFileName())
                     .filename(filename)
-                    .size(Files.size(temporaryPath))
+                    .size(Files.size(tempFile.toPath()))
                     .type(Files.probeContentType(path))
-                    .directory(storageRoot)
+                    .directory("/")
                     .build();
 
             fileDataRepo.insert(fileData);
-            Files.move(temporaryPath, path);
-            temporaryPath.toFile().deleteOnExit();
+            Files.move(tempFile.toPath(), path);
+            path.toFile().deleteOnExit();
             return fileData;
         } catch (IOException e) {
             e.printStackTrace();
@@ -94,29 +96,33 @@ public class FileService {
         return fileDataRepo.findFileDataByRegexpDirectory(regex);
     }
 
-    public void removeFile(String id){
-        Optional<FileData> fileData = fileDataRepo.findById(id);
-        try {
-            Files.deleteIfExists(Paths.get(fileData.get().getDirectory() + File.separator + fileData.get().getFilename()));
-        } catch (IOException e) {
-            e.printStackTrace();
+    public void removeFile(String id) throws FileNotFoundException {
+        Optional<FileData> optionalFileData = fileDataRepo.findById(id);
+            if (optionalFileData.isPresent()){
+                try {
+                    FileData fileData = optionalFileData.get();
+                    Files.deleteIfExists(Paths.get(fileData.getDirectory() + File.separator + fileData.getFilename()));
+                    fileDataRepo.deleteById(id);
+                } catch (IOException e){
+                    log.error("Impossible to remove file", e);
+                }
+            }
+            else {
+                throw new FileNotFoundException(String.format("File with id %s does not found", id));
+            }
         }
-        fileDataRepo.deleteById(id);
-    }
 
-    public FileData findByFilename(String filename){
-        return fileDataRepo.findByFilename(filename);
-    }
 
     public List<FileData> searchByRegex(String regex){
         return fileDataRepo.findFileDataByRegexpFilename(regex);
     }
 
     public FileData moveFile(String id, String directory) {
-        Path destDirectory = Paths.get(storageRoot + File.separator + directory);
+        Optional<FileData> optionalFileData = fileDataRepo.findById(id);
+            FileData fileData = optionalFileData.get();
+            Path destDirectory = storageRootPath.resolve(directory);
+            Path destination = getDestination(fileData.getFilename(), destDirectory);
 
-        Path destination = getDestination(id, destDirectory);
-        FileData fileData = fileDataRepo.findById(id).get();
 
         try {
             if (!Files.exists(destDirectory)) {
@@ -165,12 +171,15 @@ public class FileService {
         return fileDataRepo.findById(id);
     }
 
-    public long getFileSize(URL url) {
+    public File getFileSize(URL url) {
         HttpURLConnection conn = null;
         try {
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("HEAD");
-            return conn.getContentLengthLong();
+            File tempFile = File.createTempFile("tmp", null,
+                    new File(storageRoot));
+            IOUtils.copy(conn.getInputStream(), new FileOutputStream(tempFile));
+            return tempFile;
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
@@ -180,15 +189,26 @@ public class FileService {
         }
     }
 
-    public void deleteAllFiles(){
-        fileDataRepo.deleteAll();
+    public Path getDestination(String fileName, Path destDirectory){
+        return destDirectory.resolve(fileName);
     }
 
-    public Path getDestination(String id, Path destDirectory){
+    public void getFileContent(String id, HttpServletResponse response){
         FileData fileData;
-        Optional<FileData> optionalFileData = fileDataRepo.findById(id);
-        if (optionalFileData.isPresent()) fileData = optionalFileData.get();
-        else return null;
-        return destDirectory.resolve(fileData.getFilename());
+
+        try {
+            Optional<FileData> optionalFileData = findFileById(id);
+            if (optionalFileData.isPresent()){
+                fileData = optionalFileData.get();
+                InputStream is = new FileInputStream(fileData.getDirectory() + File.separator + fileData.getFilename());
+                IOUtils.copy(is, response.getOutputStream());
+                response.flushBuffer();
+            }
+
+        } catch (IOException ex) {
+            log.info("Error writing file to output stream. Filename was '{}'", id, ex);
+            throw new RuntimeException("IOError writing file to output stream");
+        }
     }
+
 }
