@@ -35,10 +35,6 @@ public class ChatRoomService {
         return Objects.requireNonNullElseGet(chatRoom, () -> chatRoomRepo.insert(ChatRoom.builder().roomName(roomName).build()));
     }
 
-    public ChatRoom findByRoomName(String roomName){
-        return chatRoomRepo.findByRoomName(roomName);
-    }
-
     public List<ChatRoom> getAllRooms(){
         return chatRoomRepo.findAll();
     }

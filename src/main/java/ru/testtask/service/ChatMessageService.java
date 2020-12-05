@@ -11,6 +11,7 @@ import ru.testtask.model.MessageType;
 import ru.testtask.repo.MessageRepo;
 
 import java.util.Date;
+import java.util.Optional;
 
 
 import static java.lang.String.format;
@@ -37,8 +38,10 @@ public class ChatMessageService {
     }
 
     public ChatMessage addMessage(ChatMessage chatMessage, String roomId){
-        if (chatMessage.getContent().length() < maxMessageLength) {
-            ChatRoom chatRoom = chatRoomService.getRoomById(roomId).get();
+        Optional<ChatRoom> optionalChatRoom = chatRoomService.getRoomById(roomId);
+
+        if (chatMessage.getContent().length() < maxMessageLength && optionalChatRoom.isPresent()) {
+            ChatRoom chatRoom = optionalChatRoom.get();
             chatMessage.setChatRoom(chatRoom);
             chatMessage.setDate(new Date());
             return messageRepo.insert(chatMessage);

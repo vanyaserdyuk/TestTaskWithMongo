@@ -5,11 +5,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.testtask.dto.ChatMessageDTO;
 import ru.testtask.dto.ChatRoomDTO;
 import ru.testtask.model.ChatRoom;
 import ru.testtask.service.ChatRoomService;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 public class ChatRoomController {
@@ -24,8 +26,11 @@ public class ChatRoomController {
     }
 
     @GetMapping("/chat/getRooms")
-    public ResponseEntity<List<ChatRoom>> getAllChatRooms(){
-        return new ResponseEntity<>(chatRoomService.getAllRooms(), HttpStatus.OK);
+    public ResponseEntity<List<ChatRoomDTO>> getAllChatRooms(){
+        List<ChatRoom> chatRooms = chatRoomService.getAllRooms();
+        return new ResponseEntity<>(chatRooms.stream().map(chatRoom -> modelMapper.map(chatRoom, ChatRoomDTO.class))
+                .collect(Collectors.toList())
+                ,HttpStatus.OK);
     }
 
     @PostMapping("/chat/createRoom")

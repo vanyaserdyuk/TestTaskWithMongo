@@ -15,7 +15,6 @@ var roomIdDisplay = document.querySelector('#room-id-display');
 var stompClient = null;
 var currentSubscription;
 var username = null;
-var roomName = null;
 var topic = null;
 var roomId = null;
 localStorage.page = 0;
@@ -38,14 +37,14 @@ function connect(event) {
 function enterRoom(newRoomName) {
     roomIdDisplay.textContent = newRoomName;
 
-    topic = `/app/chat/${roomId}`;
+    topic = `/app/ws/chat/room/${roomId}`;
 
     if (currentSubscription) {
         currentSubscription.unsubscribe();
     }
     currentSubscription = stompClient.subscribe(`/channel/${roomId}`, onMessageReceived);
 
-    stompClient.send(`${topic}/addUser`,
+    stompClient.send(`${topic}/user/add`,
         {},
         JSON.stringify({sender: username, type: 'JOIN'})
     );
@@ -76,7 +75,7 @@ function sendMessage(event) {
             type: 'CHAT',
             roomId: roomId
         };
-        stompClient.send(`${topic}/sendMessage`, {}, JSON.stringify(chatMessage));
+        stompClient.send(`${topic}/message/send`, {}, JSON.stringify(chatMessage));
     }
     messageInput.value = '';
     event.preventDefault();
@@ -90,9 +89,16 @@ function onMessageReceived(payload) {
 }
 
 function getHistory(){
+    var page = localStorage.page
+    var pageSize = 15;
+
     $.ajax({
-        url: 'chat/' + roomId + '/getMessages/' + localStorage.page,
-        method: 'GET'
+        url: 'api/chat/room/' + roomId + '/messages',
+        method: 'GET',
+        data: {
+            page: page,
+            pageSize: pageSize
+        }
     }).done(({content}) => {content.forEach(
         function sendHistory(currentContent){
             var messageElement = addMessage(currentContent);

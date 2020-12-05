@@ -26,13 +26,13 @@ public class ChatWsController {
         this.modelMapper = modelMapper;
     }
 
-    @MessageMapping("/chat/{roomId}/sendMessage")
+    @MessageMapping("/ws/chat/room/{roomId}/message/send")
     public void sendMessage(@DestinationVariable String roomId, @Payload ChatMessageDTO chatMessageDTO) {
         ChatMessage messageToSend = chatMessageService.addMessage(modelMapper.map(chatMessageDTO, ChatMessage.class), roomId);
         chatMessageService.sendMessageToChat(roomId, messageToSend);
     }
 
-    @MessageMapping("/chat/{roomId}/addUser")
+    @MessageMapping("/ws/chat/room/{roomId}/user/add")
     public void addUserToRoom(@DestinationVariable String roomId, @Payload ChatMessage chatMessage,
                               SimpMessageHeaderAccessor headerAccessor) {
         String currentRoomId = (String) headerAccessor.getSessionAttributes().put(WS_SESSION_ATTRIBUTE_ROOM_ID, roomId);
