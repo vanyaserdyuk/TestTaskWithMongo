@@ -106,11 +106,16 @@ button.history {
 
 }
 
-select.default {
-    background-color: #8a2be2;
-    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.12);
-    color: #fff;
-    margin: 0;
+input[list]
+{
+    margin-left:auto;
+    margin-right:auto;
+
+    width: 100%;
+    min-height: 38px;
+    font-size: 15px;
+    border: 1px solid #c8c8c8;
+    color: #666;
 }
 
 button.accent {

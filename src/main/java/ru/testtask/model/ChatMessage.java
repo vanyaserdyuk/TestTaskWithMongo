@@ -8,6 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.persistence.Id;
 import java.time.LocalTime;
+import java.util.Date;
 
 @Document(collection = "chatMessages")
 @Data
@@ -17,9 +18,9 @@ public class ChatMessage {
     private MessageType type;
     private String content;
     private String sender;
-    private LocalTime date;
+    private Date date;
 
     @DBRef(lazy = true)
-    @JsonAlias("roomName")
+    @JsonAlias("roomId")
     private ChatRoom chatRoom;
 }

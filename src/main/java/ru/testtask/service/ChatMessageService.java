@@ -1,6 +1,5 @@
 package ru.testtask.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,7 +10,7 @@ import ru.testtask.model.ChatRoom;
 import ru.testtask.model.MessageType;
 import ru.testtask.repo.MessageRepo;
 
-import java.time.LocalTime;
+import java.util.Date;
 
 
 import static java.lang.String.format;
@@ -37,11 +36,11 @@ public class ChatMessageService {
         this.chatRoomService = chatRoomService;
     }
 
-    public ChatMessage addMessage(ChatMessage chatMessage, String roomName){
+    public ChatMessage addMessage(ChatMessage chatMessage, String roomId){
         if (chatMessage.getContent().length() < maxMessageLength) {
-            ChatRoom chatRoom = chatRoomService.addChatRoomIfNotExists(roomName);
+            ChatRoom chatRoom = chatRoomService.getRoomById(roomId).get();
             chatMessage.setChatRoom(chatRoom);
-            chatMessage.setDate(LocalTime.now());
+            chatMessage.setDate(new Date());
             return messageRepo.insert(chatMessage);
         }
         else {
@@ -50,12 +49,12 @@ public class ChatMessageService {
         }
     }
 
-    public Page<ChatMessage> findAllByRoom(Pageable pageable, ChatRoom roomName){
-        return messageRepo.findByChatRoom(pageable, roomName);
+    public Page<ChatMessage> findAllByRoom(Pageable pageable, String roomId){
+        return messageRepo.findByChatRoomId(pageable, roomId);
     }
 
-    public void sendMessageToChat(String roomName, ChatMessage chatMessage){
-        messagingTemplate.convertAndSend(format(CHAT_ROOM_TOPIC + "/%s", roomName), chatMessage);
+    public void sendMessageToChat(String roomId, ChatMessage chatMessage){
+        messagingTemplate.convertAndSend(format(CHAT_ROOM_TOPIC + "/%s", roomId), chatMessage);
     }
 
     public ChatMessage createLeaveMessage(ChatMessage chatMessage){

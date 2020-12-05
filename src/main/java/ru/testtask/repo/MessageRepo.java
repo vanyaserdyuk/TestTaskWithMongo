@@ -7,5 +7,5 @@ import ru.testtask.model.ChatMessage;
 import ru.testtask.model.ChatRoom;
 
 public interface MessageRepo extends MongoRepository<ChatMessage, String> {
-    Page<ChatMessage> findByChatRoom(Pageable pageable, ChatRoom chatRoom);
+    Page<ChatMessage> findByChatRoomId(Pageable pageable, String chatRoomId);
 }

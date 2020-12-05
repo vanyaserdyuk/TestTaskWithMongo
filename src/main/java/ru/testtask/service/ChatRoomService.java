@@ -10,6 +10,8 @@ import ru.testtask.repo.ChatRoomRepo;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class ChatRoomService {
@@ -29,10 +31,8 @@ public class ChatRoomService {
     }
 
     public ChatRoom addChatRoomIfNotExists(String roomName){
-        if (chatRoomRepo.findByRoomName(roomName) == null) {
-            return chatRoomRepo.insert(ChatRoom.builder().roomName(roomName).build());
-        }
-        else return chatRoomRepo.findByRoomName(roomName);
+        ChatRoom chatRoom = chatRoomRepo.findByRoomName(roomName);
+        return Objects.requireNonNullElseGet(chatRoom, () -> chatRoomRepo.insert(ChatRoom.builder().roomName(roomName).build()));
     }
 
     public ChatRoom findByRoomName(String roomName){
@@ -41,6 +41,10 @@ public class ChatRoomService {
 
     public List<ChatRoom> getAllRooms(){
         return chatRoomRepo.findAll();
+    }
+
+    public Optional<ChatRoom> getRoomById(String id){
+        return chatRoomRepo.findById(id);
     }
 
 }

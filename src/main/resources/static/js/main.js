@@ -1,7 +1,7 @@
 'use strict';
 
 var nameInput = $('#name');
-var roomInput = $('#room-id');
+var roomInput = $('#room-name');
 var usernamePage = document.querySelector('#username-page');
 var chatPage = document.querySelector('#chat-page');
 var usernameForm = document.querySelector('#usernameForm');
@@ -17,6 +17,7 @@ var currentSubscription;
 var username = null;
 var roomName = null;
 var topic = null;
+var roomId = null;
 localStorage.page = 0;
 
 function connect(event) {
@@ -34,15 +35,15 @@ function connect(event) {
 }
 
 
-function enterRoom(newRoomId) {
-    roomName = newRoomId;
-    roomIdDisplay.textContent = roomName;
-    topic = `/app/chat/${newRoomId}`;
+function enterRoom(newRoomName) {
+    roomIdDisplay.textContent = newRoomName;
+
+    topic = `/app/chat/${roomId}`;
 
     if (currentSubscription) {
         currentSubscription.unsubscribe();
     }
-    currentSubscription = stompClient.subscribe(`/channel/${roomName}`, onMessageReceived);
+    currentSubscription = stompClient.subscribe(`/channel/${roomId}`, onMessageReceived);
 
     stompClient.send(`${topic}/addUser`,
         {},
@@ -63,8 +64,8 @@ function onError(error) {
 function sendMessage(event) {
     var messageContent = messageInput.value.trim();
     if (messageContent.startsWith('/join ')) {
-        var newRoomId = messageContent.substring('/join '.length);
-        enterRoom(newRoomId);
+        var newRoomName = messageContent.substring('/join '.length);
+        enterRoom(newRoomName);
         while (messageArea.firstChild) {
             messageArea.removeChild(messageArea.firstChild);
         }
@@ -73,7 +74,7 @@ function sendMessage(event) {
             sender: username,
             content: messageInput.value,
             type: 'CHAT',
-            roomName: roomName
+            roomId: roomId
         };
         stompClient.send(`${topic}/sendMessage`, {}, JSON.stringify(chatMessage));
     }
@@ -90,7 +91,7 @@ function onMessageReceived(payload) {
 
 function getHistory(){
     $.ajax({
-        url: 'chat/' + roomName + '/getMessages/' + localStorage.page,
+        url: 'chat/' + roomId + '/getMessages/' + localStorage.page,
         method: 'GET'
     }).done(({content}) => {content.forEach(
         function sendHistory(currentContent){
@@ -102,12 +103,24 @@ function getHistory(){
     localStorage.page = ++localStorage.page;
 }
 
-function getRooms(){
+(function getRooms(){
     $.ajax({
         url: 'chat/getRooms',
         method: 'GET'
 
     }).done((data) => data.forEach(({roomName}) => $('#select').append('<option>' + roomName + '</option>')));
+}());
+
+function createRoom(){
+    var roomObj = {
+        "roomName": roomInput.val()
+    }
+
+    $.ajax({
+        url: 'chat/createRoom',
+        method: 'POST',
+        data: roomObj,
+    }).done((data) => roomId = data.id);
 }
 
 function addMessage(message){
