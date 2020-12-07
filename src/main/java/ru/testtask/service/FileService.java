@@ -39,7 +39,7 @@ public class FileService {
 
     private Path temporaryDir;
 
-    @Value("${storage.file.max-size.mb:500}")
+    @Value("${storage.file.max-size.mb}")
     private long fileMaxSizeMb;
 
     private final FileDataRepo fileDataRepo;
@@ -85,7 +85,7 @@ public class FileService {
             path.toFile().deleteOnExit();
             return fileData;
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("An error is occurred during creation file data with URL %s into db .....");
         }
 
         return null;
@@ -151,7 +151,7 @@ public class FileService {
 
         try {
             if (!Files.exists(destDirectory)) {
-                Files.createDirectory(destDirectory);
+                Files.createDirectories(destDirectory);
             }
 
             Files.copy(Paths.get(fileData.getDirectory() + File.separator + fileData.getFilename()),
@@ -206,9 +206,13 @@ public class FileService {
             }
 
         } catch (IOException ex) {
-            log.info("Error writing file to output stream. Filename was '{}'", id, ex);
+            log.error("Error writing file to output stream. Filename was '{}'", id, ex);
             throw new RuntimeException("IOError writing file to output stream");
         }
+    }
+
+    public Path getFileAbsolutePath(FileData fileData){
+        return Paths.get(fileData.getDirectory() + File.separator + fileData.getFilename());
     }
 
 }
