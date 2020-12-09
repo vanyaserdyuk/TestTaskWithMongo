@@ -1,7 +1,6 @@
 package ru.testtask.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.util.List;
 
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -37,7 +37,7 @@ public class FileController {
     public ResponseEntity<?> uploadFile(@RequestBody UploadFileDTO uploadFileDTO){
         try {
             FileData fileData = fileService.uploadFile(uploadFileDTO);
-            return new ResponseEntity<>(modelMapper.map(fileData, FileDTO.class), HttpStatus.OK);
+            return new ResponseEntity<>(fileData, HttpStatus.OK);
         }
         catch (FileIsToLargeException e){
             return new ResponseEntity<>("Impossible to upload this file", HttpStatus.PAYLOAD_TOO_LARGE);
@@ -55,10 +55,10 @@ public class FileController {
         }
     }
 
-    @GetMapping("/find/regexp{regexp}")
+    @GetMapping("/find/regexp/{regexp}")
     public ResponseEntity<List<FileDTO>> searchFileWithRegex(@PathVariable String regexp){
-        List<FileData> fileData = fileService.searchByRegex(regexp);
-        List<FileDTO> fileDTOS = fileData.stream().map(user -> modelMapper.map(fileData, FileDTO.class)).collect(Collectors.toList());
+        List<FileData> fileDatas = fileService.searchByRegex(regexp);
+        List<FileDTO> fileDTOS = fileDatas.stream().map(fileData -> modelMapper.map(fileData, FileDTO.class)).collect(Collectors.toList());
         return new ResponseEntity<>(fileDTOS, HttpStatus.OK);
     }
 
@@ -78,8 +78,19 @@ public class FileController {
             return new ResponseEntity<>(String.format("File with the same name is already exists in directory %s", directory),
                     HttpStatus.CONFLICT);
         }
-        return new ResponseEntity<>(modelMapper.map(fileService.findFileById(id).get(), FileDTO.class)
-                ,HttpStatus.OK);
+        catch (FileNotFoundException e){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        Optional<FileData> optionalFileData = fileService.findFileById(id);
+
+        if (optionalFileData.isEmpty()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        else {
+            return new ResponseEntity<>(modelMapper.map(optionalFileData.get(), FileDTO.class)
+                    , HttpStatus.OK);
+        }
     }
 
     @PostMapping("/{id}/copy/{directory}")
