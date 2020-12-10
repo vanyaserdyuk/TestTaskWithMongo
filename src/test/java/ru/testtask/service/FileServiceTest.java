@@ -13,6 +13,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import ru.testtask.Application;
 import ru.testtask.config.TestConfig;
 import ru.testtask.dto.UploadFileDTO;
+import ru.testtask.exception.FileIsToLargeException;
 import ru.testtask.model.FileData;
 import ru.testtask.util.TestUtils;
 
@@ -49,17 +50,17 @@ public class FileServiceTest {
     }
 
     @Test
-    public void addFileTest(){
+    public void uploadFileTest(){
         UploadFileDTO uploadFileDTO = UploadFileDTO.builder().fileUrl(testUrl)
                 .fileName("b").build();
         FileData fileData = fileService.uploadFile(uploadFileDTO);
         assertNotNull(fileData.getFilename());
         assertEquals("b", fileData.getOriginalFilename());
-        assertEquals(fileService.getStorageRootPath().toString(), fileData.getDirectory());
+        assertEquals("/", fileData.getDirectory());
         assertEquals("image/jpeg", fileData.getType());
         assertNotNull(fileData.getId());
         assertEquals(10158, fileData.getSize());
-
+        assertTrue(Files.exists(fileService.getStorageRootPath().resolve(fileData.getFilename())));
     }
 
     @Test
@@ -67,7 +68,15 @@ public class FileServiceTest {
         FileData fileData = testUtils.createTestData();
         fileService.removeFile(fileData.getId());
         assertEquals(Optional.empty(), fileService.findFileById(fileData.getId()));
-        assertTrue(Files.exists(fileService.getStorageRootPath().resolve(fileData.getFilename())));
+        assertFalse(Files.exists(fileService.getStorageRootPath().resolve(fileData.getFilename())));
+    }
+
+    @Test(expected = FileIsToLargeException.class)
+    public void uploadLargeFile() {
+        UploadFileDTO uploadFileDTO = UploadFileDTO.builder()
+                .fileUrl("https://www.zastavki.com/pictures/2560x1600/2011/Space_Big_planet_031405_.jpg")
+                .fileName("b").build();
+        fileService.uploadFile(uploadFileDTO);
     }
 
     @Test
@@ -75,11 +84,11 @@ public class FileServiceTest {
         UploadFileDTO uploadFileDTO = UploadFileDTO.builder().fileUrl(testUrl)
                 .fileName("b").build();
         FileData fileData = fileService.uploadFile(uploadFileDTO);
-        fileData = fileService.moveFile(fileData.getId(), "a");
+        fileData = fileService.moveFile(fileData.getId(), "a/b/c");
         assertFalse(Files.exists(Paths.get(fileService.getStorageRootPath().toString() + File.separator + fileData.getFilename())));
         assertTrue(Files.exists(Paths.get(fileService.getStorageRootPath().toString() + File.separator +
-                "a" + File.separator + fileData.getFilename())));
-        assertEquals("C:\\Files\\a", fileData.getDirectory());
+                "/a/b/c" + File.separator + fileData.getFilename())));
+        assertEquals("/a/b/c", fileData.getDirectory());
     }
 
     @Test
@@ -89,9 +98,10 @@ public class FileServiceTest {
         FileData fileData = fileService.uploadFile(uploadFileDTO);
         fileService.copyFile(fileData.getId(), "dir1");
         assertTrue(Files.exists(Paths.get(fileService.getStorageRootPath().toString() + File.separator + "dir1")));
-        assertTrue(Files.exists(Paths.get(fileService.getStorageRootPath().toString() + File.separator + "dir1" +
-                File.separator + fileData.getFilename())));
         assertEquals(2, fileService.searchByRegex("test").size());
+        fileService.copyFile(fileData.getId(), "dir1");
+        assertEquals(3, fileService.searchByRegex("test").size());
+        assertNotNull(fileService.searchByRegex("test (0).jpg"));
     }
 
     @Test
@@ -122,15 +132,11 @@ public class FileServiceTest {
         assertEquals(1, fileDataList.size());
         assertEquals("abcdefg", fileDataList.get(0).getOriginalFilename());
 
-        fileDataList = fileService.getFileListFromDirectory("dir2");
-        assertEquals(2, fileDataList.size());
+        fileDataList = fileService.getFileListFromDirectory("dir1/dir2");
+        assertEquals(1, fileDataList.size());
 
         fileDataList = fileService.getFileListFromDirectory("dir3");
-        assertEquals(1, fileDataList.size());
-        assertEquals("defabcggert", fileDataList.get(0).getOriginalFilename());
-
-        fileDataList = fileService.getFileListFromDirectory("dir");
-        assertEquals(2, fileDataList.size());
+        assertEquals(0, fileDataList.size());
 
         fileDataList = fileService.getFileListFromDirectory("folder");
         assertEquals(1, fileDataList.size());

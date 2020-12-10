@@ -36,7 +36,7 @@ public class TestUtils {
     public FileData createTestData(){
         FileData fileData1 = FileData.builder().originalFilename("testFile")
                 .filename("a")
-                .directory("test/")
+                .directory("/")
                 .build();
         return fileDataRepo.insert(fileData1);
     }

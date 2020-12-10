@@ -51,7 +51,7 @@ public class FileController {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
         catch (FileNotFoundException e){
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 
@@ -97,13 +97,25 @@ public class FileController {
     public ResponseEntity<String> copyFile(@PathVariable String id,
                                            @PathVariable String directory) throws IOException {
 
-        fileService.copyFile(id, directory);
-        return new ResponseEntity<>(String.format("File was copied to %s", directory), HttpStatus.OK);
+        try {
+            fileService.copyFile(id, directory);
+            return new ResponseEntity<>(String.format("File with id %s was copied to %s", id, directory)
+                    , HttpStatus.OK);
+        } catch (FileNotFoundException e){
+             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
     }
 
     @GetMapping("/{id}/download")
-    public void getFileContent(@PathVariable("id") String id,
+    public ResponseEntity<String> getFileContent(@PathVariable("id") String id,
             HttpServletResponse response) {
-            fileService.getFileContent(id, response);
+            try {
+                fileService.getFileContent(id, response);
+                return new ResponseEntity<>("File was successfully downloaded", HttpStatus.OK);
+            }
+            catch (FileNotFoundException e){
+                return new ResponseEntity<>(String.format("File with ID %s does not found", id),
+                        HttpStatus.NOT_FOUND);
+            }
     }
 }

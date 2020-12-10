@@ -2,6 +2,7 @@ package ru.testtask.service;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+import com.mongodb.MongoWriteException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -90,7 +91,7 @@ public class FileService {
     }
 
     public List<FileData> getFileListFromDirectory(String directory){
-        String regex = "^" + directory;
+        String regex = "^/" + directory;
         return fileDataRepo.findFileDataByRegexpDirectory(regex);
     }
 
@@ -99,7 +100,7 @@ public class FileService {
             if (optionalFileData.isPresent()){
                 try {
                     FileData fileData = optionalFileData.get();
-                    Files.deleteIfExists(Paths.get(fileData.getDirectory() + File.separator + fileData.getFilename()));
+                    Files.deleteIfExists(getFileAbsolutePath(fileData));
                     fileDataRepo.deleteById(id);
                 } catch (IOException e){
                     log.error("Impossible to remove file", e);
@@ -119,30 +120,28 @@ public class FileService {
         if (optionalFileData.isEmpty()){
             throw new FileNotFoundException(String.format("File with id %s does not found", id));
         }
-
             FileData fileData = optionalFileData.get();
             Path destDirectory = storageRootPath.resolve(directory);
-            Path destination = getDestination(fileData.getFilename(), destDirectory);
+            Path destination = destDirectory.resolve(fileData.getFilename());
 
         try {
             if (!Files.exists(destDirectory)) {
                 Files.createDirectories(destDirectory);
             }
 
-            if (Files.exists(destination)) {
-                throw new NameAlreadyExistsException("Already exists");
-            }
-
             Files.move(getFileAbsolutePath(fileData), destination);
+            fileData.setDirectory("/" + directory);
+            fileDataRepo.save(fileData);
         } catch (IOException e) {
             log.error(String.format("An error occurred during moving the file with id %s", id));
+        } catch (MongoWriteException e){
+            log.error("File with the same directory and filename already exists!");
         }
 
-        fileData.setDirectory(directory);
-        return fileDataRepo.save(fileData);
+        return fileData;
     }
 
-    public void copyFile(String id, String directory) throws IOException {
+    public void copyFile(String id, String directory) throws IOException, FileNotFoundException {
         String newOriginalFileName;
         int i = 0;
         Optional<FileData> optionalFileData = fileDataRepo.findById(id);
@@ -155,7 +154,7 @@ public class FileService {
 
         FileData fileData = optionalFileData.get();
         String newFilename = UUID.randomUUID().toString() + "." + FilenameUtils.getExtension(fileData.getFilename());
-        Path destination = getDestination(newFilename, destDirectory);
+        Path destination = destDirectory.resolve(fileData.getFilename());
 
         try {
             if (!Files.exists(destDirectory)) {
@@ -218,20 +217,20 @@ public class FileService {
         }
     }
 
-    public Path getDestination(String fileName, Path destDirectory){
-        return destDirectory.resolve(fileName);
-    }
-
-    public void getFileContent(String id, HttpServletResponse response){
+    public void getFileContent(String id, HttpServletResponse response) throws FileNotFoundException {
         FileData fileData;
 
         try {
             Optional<FileData> optionalFileData = findFileById(id);
             if (optionalFileData.isPresent()){
                 fileData = optionalFileData.get();
-                InputStream is = new FileInputStream(fileData.getDirectory() + File.separator + fileData.getFilename());
+                InputStream is = new FileInputStream(String.valueOf(getFileAbsolutePath(fileData)));
                 IOUtils.copy(is, response.getOutputStream());
                 response.flushBuffer();
+            }
+
+            else {
+                throw new FileNotFoundException("File does not exist");
             }
 
         } catch (IOException ex) {
