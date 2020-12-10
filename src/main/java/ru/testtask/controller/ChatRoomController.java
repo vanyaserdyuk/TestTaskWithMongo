@@ -1,11 +1,9 @@
 package ru.testtask.controller;
 
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.testtask.dto.ChatMessageDTO;
 import ru.testtask.dto.ChatRoomDTO;
 import ru.testtask.model.ChatRoom;
 import ru.testtask.service.ChatRoomService;
@@ -25,7 +23,7 @@ public class ChatRoomController {
         this.modelMapper = modelMapper;
     }
 
-    @GetMapping("/chat/getRooms")
+    @GetMapping("/chat/rooms")
     public ResponseEntity<List<ChatRoomDTO>> getAllChatRooms(){
         List<ChatRoom> chatRooms = chatRoomService.getAllRooms();
         return new ResponseEntity<>(chatRooms.stream().map(chatRoom -> modelMapper.map(chatRoom, ChatRoomDTO.class))
@@ -33,7 +31,7 @@ public class ChatRoomController {
                 ,HttpStatus.OK);
     }
 
-    @PostMapping("/chat/createRoom")
+    @PostMapping("/chat/rooms")
     public ResponseEntity<ChatRoomDTO> createChatRoom(@RequestParam String roomName){
         ChatRoom chatRoom = chatRoomService.addChatRoomIfNotExists(roomName);
         return new ResponseEntity<>(modelMapper.map(chatRoom, ChatRoomDTO.class), HttpStatus.OK);

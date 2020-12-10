@@ -8,17 +8,19 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
-import ru.testtask.model.ChatMessage;
-import ru.testtask.model.MessageType;
 
-import static java.lang.String.format;
+import static ru.testtask.service.ChatMessageServiceImpl.WS_SESSION_ATTRIBUTE_ROOM_ID;
+import static ru.testtask.service.ChatMessageServiceImpl.WS_SESSION_ATTRIBUTE_USERNAME;
 
 @Slf4j
 @Component
 public class WebSocketEventListener {
 
-    @Autowired
-    private SimpMessageSendingOperations messagingTemplate;
+    private final ChatMessageServiceImpl chatMessageService;
+
+    public WebSocketEventListener(ChatMessageServiceImpl chatMessageService) {
+        this.chatMessageService = chatMessageService;
+    }
 
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
@@ -29,16 +31,11 @@ public class WebSocketEventListener {
     public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
 
-        String username = (String) headerAccessor.getSessionAttributes().get("username");
-        String roomId = (String) headerAccessor.getSessionAttributes().get("room_id");
+        String username = (String) headerAccessor.getSessionAttributes().get(WS_SESSION_ATTRIBUTE_USERNAME);
+        String roomId = (String) headerAccessor.getSessionAttributes().get(WS_SESSION_ATTRIBUTE_ROOM_ID);
         if (username != null) {
             log.debug("User Disconnected: " + username);
-
-            ChatMessage chatMessage = new ChatMessage();
-            chatMessage.setType(MessageType.LEAVE);
-            chatMessage.setSender(username);
-
-            messagingTemplate.convertAndSend(format("/channel/%s", roomId), chatMessage);
+            chatMessageService.sendUserLeaveFromRoom(roomId, username);
         }
     }
 }

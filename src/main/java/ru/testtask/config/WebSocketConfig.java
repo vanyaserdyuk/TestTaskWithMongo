@@ -6,11 +6,11 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
+import static ru.testtask.service.ChatMessageServiceImpl.CHAT_ROOM_TOPIC;
+
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
-
-    private final static String CHAT_ROOM_TOPIC= "/channel";
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {

@@ -2,6 +2,7 @@
 
 var nameInput = $('#name');
 var roomInput = $('#room-name');
+var changeRoomInput = $('#newRoomName');
 var usernamePage = document.querySelector('#username-page');
 var chatPage = document.querySelector('#chat-page');
 var usernameForm = document.querySelector('#usernameForm');
@@ -17,6 +18,7 @@ var currentSubscription;
 var username = null;
 var topic = null;
 var roomId = null;
+var newRoomId = null;
 localStorage.page = 0;
 
 function connect(event) {
@@ -45,8 +47,7 @@ function enterRoom(newRoomName) {
     currentSubscription = stompClient.subscribe(`/channel/${roomId}`, onMessageReceived);
 
     stompClient.send(`${topic}/user/add`,
-        {},
-        JSON.stringify({sender: username, type: 'JOIN'})
+        {}, username
     );
 }
 
@@ -72,8 +73,6 @@ function sendMessage(event) {
         var chatMessage = {
             sender: username,
             content: messageInput.value,
-            type: 'CHAT',
-            roomId: roomId
         };
         stompClient.send(`${topic}/message/send`, {}, JSON.stringify(chatMessage));
     }
@@ -109,21 +108,37 @@ function getHistory(){
     localStorage.page = ++localStorage.page;
 }
 
+function changeRoom(){
+    let roomObj = {
+        "roomName" : changeRoomInput.val()
+    }
+
+    $.ajax({
+        url: 'chat/rooms',
+        method: 'POST',
+        data: roomObj,
+    }).done((data) => roomId = data.id);
+
+    messageArea.textContent = '';
+    localStorage.page = 0;
+    enterRoom(changeRoomInput.val());
+}
+
 (function getRooms(){
     $.ajax({
-        url: 'chat/getRooms',
+        url: 'chat/rooms',
         method: 'GET'
 
     }).done((data) => data.forEach(({roomName}) => $('#select').append('<option>' + roomName + '</option>')));
 }());
 
 function createRoom(){
-    var roomObj = {
+    let roomObj = {
         "roomName": roomInput.val()
     }
 
     $.ajax({
-        url: 'chat/createRoom',
+        url: 'chat/rooms',
         method: 'POST',
         data: roomObj,
     }).done((data) => roomId = data.id);
@@ -134,7 +149,7 @@ function addMessage(message){
 
     if (message.type == 'JOIN') {
         messageElement.classList.add('event-message');
-        message.content = message.sender + ' joined!';
+        message.content = message.username + ' joined!';
     }
     else if (message.type == 'ERROR') {
         connectingElement.classList.remove('hidden');
@@ -143,7 +158,7 @@ function addMessage(message){
         message.content = '';
     } else if (message.type == 'LEAVE') {
         messageElement.classList.add('event-message');
-        message.content = message.sender + ' left!';
+        message.content = message.username + ' left!';
     } else {
         messageElement.classList.add('chat-message');
 
