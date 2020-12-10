@@ -26,9 +26,9 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.nio.file.StandardCopyOption;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -110,7 +110,6 @@ public class FileService {
             }
         }
 
-
     public List<FileData> searchByRegex(String regex){
         return fileDataRepo.findFileDataByRegexpFilename(regex);
     }
@@ -144,15 +143,19 @@ public class FileService {
     }
 
     public void copyFile(String id, String directory) throws IOException {
+        String newOriginalFileName;
+        int i = 0;
         Optional<FileData> optionalFileData = fileDataRepo.findById(id);
+
         if (optionalFileData.isEmpty()){
             throw new FileNotFoundException(String.format("File with ID %s does not found", id));
         }
 
         Path destDirectory = Paths.get(storageRoot + File.separator + directory);
 
-        Path destination = getDestination(id, destDirectory);
         FileData fileData = optionalFileData.get();
+        String newFilename = UUID.randomUUID().toString() + "." + FilenameUtils.getExtension(fileData.getFilename());
+        Path destination = getDestination(newFilename, destDirectory);
 
         try {
             if (!Files.exists(destDirectory)) {
@@ -164,9 +167,19 @@ public class FileService {
             log.error(String.format("An error occurred during copying the file with id %s", id));
         }
 
-        String newFileName = fileData.getOriginalFilename() + " (copied) " + Math.random() * 100;
-        fileData.setFilename(UUID.randomUUID().toString());
-        fileData.setOriginalFilename(newFileName);
+        List<FileData> fileDatas = fileDataRepo.findFileDataByRegexpFilename(FilenameUtils
+                .removeExtension(fileData.getOriginalFilename()));
+        List<String> fileDataListNames = fileDatas.stream().map(FileData::getOriginalFilename).collect(Collectors.toList());
+
+        do {
+              newOriginalFileName = FilenameUtils.removeExtension(fileData.getOriginalFilename())
+                      + " (" + i + ")." + FilenameUtils.getExtension(fileData.getOriginalFilename());
+            i++;
+        }
+        while(fileDataListNames.contains(newOriginalFileName));
+
+        fileData.setFilename(newFilename);
+        fileData.setOriginalFilename(newOriginalFileName.toString());
         fileData.setId(null);
         fileDataRepo.insert(fileData);
     }
@@ -174,7 +187,6 @@ public class FileService {
     public Optional<FileData> findFileById(String id){
         return fileDataRepo.findById(id);
     }
-
 
     public File uploadFileFromUrl(URL url) {
         long fileMaxSizeByte = fileMaxSizeMb * 1048576;

@@ -10,6 +10,7 @@ import ru.testtask.model.FileData;
 import ru.testtask.repo.FileDataRepo;
 import ru.testtask.service.FileService;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -33,9 +34,11 @@ public class TestUtils {
     }
 
     public FileData createTestData(){
-        UploadFileDTO uploadFileDTO = UploadFileDTO.builder().fileUrl("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Sunset02.jpg/220px-Sunset02.jpg")
-                .fileName("b").build();
-        return fileService.uploadFile(uploadFileDTO);
+        FileData fileData1 = FileData.builder().originalFilename("testFile")
+                .filename("a")
+                .directory("test/")
+                .build();
+        return fileDataRepo.insert(fileData1);
     }
 
     public void createTestDataForRegexTest(){
