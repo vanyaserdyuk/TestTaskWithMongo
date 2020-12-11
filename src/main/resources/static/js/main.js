@@ -18,7 +18,6 @@ var currentSubscription;
 var username = null;
 var topic = null;
 var roomId = null;
-var newRoomId = null;
 localStorage.page = 0;
 
 function connect(event) {
@@ -117,11 +116,12 @@ function changeRoom(){
         url: 'chat/rooms',
         method: 'POST',
         data: roomObj,
-    }).done((data) => roomId = data.id);
-
-    messageArea.textContent = '';
-    localStorage.page = 0;
-    enterRoom(changeRoomInput.val());
+    }).done(function (data){
+        roomId = data.id;
+        messageArea.textContent = '';
+        localStorage.page = 0;
+        enterRoom(changeRoomInput.val());
+    });
 }
 
 (function getRooms(){
