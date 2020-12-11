@@ -93,7 +93,7 @@ public class FileController {
 
     }
 
-    @PostMapping("/{id}/copy/**")
+    @PostMapping("/{id}/copy/force/?directory=/a/b/c&force=true")
     public ResponseEntity<String> copyFile(@PathVariable String id,
                                            HttpServletRequest request) throws IOException {
 

@@ -116,13 +116,14 @@ public class FileService {
     }
 
     public FileData moveFile(String id, String directory) throws FileNotFoundException {
+        boolean success = false;
         Optional<FileData> optionalFileData = fileDataRepo.findById(id);
-        if (optionalFileData.isEmpty()){
+        if (optionalFileData.isEmpty()) {
             throw new FileNotFoundException(String.format("File with id %s does not found", id));
         }
-            FileData fileData = optionalFileData.get();
-            Path destDirectory = storageRootPath.resolve(directory);
-            Path destination = destDirectory.resolve(fileData.getFilename());
+        FileData fileData = optionalFileData.get();
+        Path destDirectory = storageRootPath.resolve(directory);
+        Path destination = destDirectory.resolve(fileData.getFilename());
 
         try {
             if (!Files.exists(destDirectory)) {
@@ -132,12 +133,16 @@ public class FileService {
             fileData.setDirectory("/" + directory);
             fileDataRepo.save(fileData);
             Files.move(getFileAbsolutePath(fileData), destination);
+            success = true;
 
         } catch (IOException e) {
             log.error(String.format("An error occurred during moving the file with id %s", id));
-        } catch (MongoWriteException e){
+        } catch (MongoWriteException e) {
             log.error("File with the same directory and filename already exists!");
-        }
+        }//finally {
+//
+//
+//        }
 
         return fileData;
     }
@@ -147,11 +152,12 @@ public class FileService {
         int i = 0;
         Optional<FileData> optionalFileData = fileDataRepo.findById(id);
 
-        if (optionalFileData.isEmpty()){
+        if (optionalFileData.isEmpty()) {
             throw new FileNotFoundException(String.format("File with ID %s does not found", id));
         }
 
-        Path destDirectory = storageRootPath.resolve(directory);;
+        Path destDirectory = storageRootPath.resolve(directory);
+        ;
 
         FileData fileData = optionalFileData.get();
         String newFilename = UUID.randomUUID().toString() + "." + FilenameUtils.getExtension(fileData.getFilename());
@@ -168,21 +174,25 @@ public class FileService {
             return;
         }
 
-        List<FileData> fileDatas = fileDataRepo.findFileDataByRegexpFilename(FilenameUtils
+        List<FileData> fileDataList = fileDataRepo.findFileDataByRegexpFilename(FilenameUtils
                 .removeExtension(fileData.getOriginalFilename()));
-        List<String> fileDataListNames = fileDatas.stream().map(FileData::getOriginalFilename).collect(Collectors.toList());
+        List<String> fileDataNamesList = fileDataList.stream().map(FileData::getOriginalFilename).collect(Collectors.toList());
 
         do {
-              newOriginalFileName = FilenameUtils.removeExtension(fileData.getOriginalFilename())
-                      + " (" + i + ")." + FilenameUtils.getExtension(fileData.getOriginalFilename());
+            newOriginalFileName = buildOriginalFilenameWhileCopy(fileData.getOriginalFilename(), i);
             i++;
         }
-        while(fileDataListNames.contains(newOriginalFileName));
+        while (fileDataNamesList.contains(newOriginalFileName));
 
         fileData.setFilename(newFilename);
         fileData.setOriginalFilename(newOriginalFileName);
         fileData.setId(null);
         fileDataRepo.insert(fileData);
+    }
+
+    private String buildOriginalFilenameWhileCopy(String filename, int index){
+        return FilenameUtils.removeExtension(filename)
+                + " (" + index + ")." + FilenameUtils.getExtension(filename);
     }
 
     public Optional<FileData> findFileById(String id){
@@ -242,7 +252,7 @@ public class FileService {
     }
 
     public Path getFileAbsolutePath(FileData fileData){
-        return Paths.get(storageRoot, fileData.getDirectory(), fileData.getFilename());
+        return storageRootPath.resolve(fileData.getDirectory()).resolve(fileData.getFilename());
     }
 
     public Path getStorageRootPath(){

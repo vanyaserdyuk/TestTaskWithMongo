@@ -5,7 +5,6 @@ import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
@@ -20,8 +19,6 @@ import ru.testtask.util.TestUtils;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -60,12 +57,12 @@ public class FileServiceTest {
         assertEquals("image/jpeg", fileData.getType());
         assertNotNull(fileData.getId());
         assertEquals(10158, fileData.getSize());
-        assertTrue(Files.exists(fileService.getStorageRootPath().resolve(fileData.getFilename())));
+        assertTrue(Files.exists(fileService.getFileAbsolutePath(fileData)));
     }
 
     @Test
     public void removeFileTest() throws FileNotFoundException {
-        FileData fileData = testUtils.createTestData();
+        FileData fileData = testUtils.createTestFileData();
         fileService.removeFile(fileData.getId());
         assertEquals(Optional.empty(), fileService.findFileById(fileData.getId()));
         assertFalse(Files.exists(fileService.getStorageRootPath().resolve(fileData.getFilename())));
@@ -85,7 +82,7 @@ public class FileServiceTest {
                 .fileName("b").build();
         FileData fileData = fileService.uploadFile(uploadFileDTO);
         fileData = fileService.moveFile(fileData.getId(), "a/b/c");
-        assertFalse(Files.exists(Paths.get(fileService.getStorageRootPath().toString() + File.separator + fileData.getFilename())));
+        assertFalse(Files.exists(fileService.getFileAbsolutePath(fileData)));
         assertTrue(Files.exists(Paths.get(fileService.getStorageRootPath().toString() + File.separator +
                 "/a/b/c" + File.separator + fileData.getFilename())));
         assertEquals("/a/b/c", fileData.getDirectory());

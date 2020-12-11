@@ -13,6 +13,7 @@ import ru.testtask.service.FileService;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Service
@@ -33,9 +34,20 @@ public class TestUtils {
         fileDataRepo.deleteAll();
     }
 
-    public FileData createTestData(){
+    public FileData createTestFileData(){
         FileData fileData1 = FileData.builder().originalFilename("testFile")
                 .filename("a")
+                .directory("/")
+                .build();
+        return fileDataRepo.insert(fileData1);
+    }
+
+    public FileData createTestFileDataWithFile() throws IOException {
+        Path path = Paths.get(storageRoot,  "file.txt");
+        Files.createFile(path);
+
+        FileData fileData1 = FileData.builder().originalFilename("testFile")
+                .filename("file.txt")
                 .directory("/")
                 .build();
         return fileDataRepo.insert(fileData1);
