@@ -129,9 +129,10 @@ public class FileService {
                 Files.createDirectories(destDirectory);
             }
 
-            Files.move(getFileAbsolutePath(fileData), destination);
             fileData.setDirectory("/" + directory);
             fileDataRepo.save(fileData);
+            Files.move(getFileAbsolutePath(fileData), destination);
+
         } catch (IOException e) {
             log.error(String.format("An error occurred during moving the file with id %s", id));
         } catch (MongoWriteException e){
@@ -150,7 +151,7 @@ public class FileService {
             throw new FileNotFoundException(String.format("File with ID %s does not found", id));
         }
 
-        Path destDirectory = Paths.get(storageRoot + File.separator + directory);
+        Path destDirectory = storageRootPath.resolve(directory);;
 
         FileData fileData = optionalFileData.get();
         String newFilename = UUID.randomUUID().toString() + "." + FilenameUtils.getExtension(fileData.getFilename());
@@ -164,6 +165,7 @@ public class FileService {
             Files.copy(getFileAbsolutePath(fileData), destination);
         } catch (IOException e) {
             log.error(String.format("An error occurred during copying the file with id %s", id));
+            return;
         }
 
         List<FileData> fileDatas = fileDataRepo.findFileDataByRegexpFilename(FilenameUtils
@@ -178,7 +180,7 @@ public class FileService {
         while(fileDataListNames.contains(newOriginalFileName));
 
         fileData.setFilename(newFilename);
-        fileData.setOriginalFilename(newOriginalFileName.toString());
+        fileData.setOriginalFilename(newOriginalFileName);
         fileData.setId(null);
         fileDataRepo.insert(fileData);
     }
@@ -240,11 +242,20 @@ public class FileService {
     }
 
     public Path getFileAbsolutePath(FileData fileData){
-        return Paths.get(storageRoot + File.separator + fileData.getDirectory() + File.separator + fileData.getFilename());
+        return Paths.get(storageRoot, fileData.getDirectory(), fileData.getFilename());
     }
 
     public Path getStorageRootPath(){
         return storageRootPath;
+    }
+
+    public FileData getFileById(String id) throws FileNotFoundException {
+        Optional<FileData> optionalFileData = fileDataRepo.findById(id);
+        if (optionalFileData.isPresent()) {
+            return optionalFileData.get();
+        } else {
+            throw new FileNotFoundException(String.format("File with id %s does not found", id));
+        }
     }
 
 }

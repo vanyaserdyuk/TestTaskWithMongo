@@ -12,6 +12,7 @@ import ru.testtask.exception.NameAlreadyExistsException;
 import ru.testtask.model.FileData;
 import ru.testtask.service.FileService;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.util.List;
@@ -62,41 +63,42 @@ public class FileController {
         return new ResponseEntity<>(fileDTOS, HttpStatus.OK);
     }
 
-    @GetMapping("/find/dir/{directory}")
-    public ResponseEntity<List<FileDTO>> getAllFiles(@PathVariable String directory){
+    @GetMapping("/find/dir/**")
+    public ResponseEntity<List<FileDTO>> getAllFiles(HttpServletRequest request){
+        String directory = request.getRequestURI()
+                .split(request.getContextPath() + "/dir/")[1];
+
         List<FileData> fileList = fileService.getFileListFromDirectory(directory);
         List<FileDTO> fileDTOS = fileList.stream().map(user -> modelMapper.map(fileList, FileDTO.class)).collect(Collectors.toList());
         return new ResponseEntity<>(fileDTOS, HttpStatus.OK);
     }
 
-    @PutMapping("/{id}/move/{directory}")
-    public ResponseEntity<?> moveFile(@PathVariable String id, @PathVariable String directory) {
+    @PutMapping("/{id}/move/**")
+    public ResponseEntity<?> moveFile(@PathVariable String id, HttpServletRequest request) {
+        String directory = request.getRequestURI()
+                .split(request.getContextPath() + "/move/")[1];
+        FileData fileData;
+
         try {
-            fileService.moveFile(id, directory);
-        }
-        catch (NameAlreadyExistsException e){
+            fileData = fileService.moveFile(id, directory);
+        } catch (NameAlreadyExistsException e) {
             return new ResponseEntity<>(String.format("File with the same name is already exists in directory %s", directory),
                     HttpStatus.CONFLICT);
-        }
-        catch (FileNotFoundException e){
+        } catch (FileNotFoundException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        Optional<FileData> optionalFileData = fileService.findFileById(id);
+        return new ResponseEntity<>(modelMapper.map(fileData, FileDTO.class)
+                , HttpStatus.OK);
 
-        if (optionalFileData.isEmpty()){
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        else {
-            return new ResponseEntity<>(modelMapper.map(optionalFileData.get(), FileDTO.class)
-                    , HttpStatus.OK);
-        }
     }
 
-    @PostMapping("/{id}/copy/{directory}")
+    @PostMapping("/{id}/copy/**")
     public ResponseEntity<String> copyFile(@PathVariable String id,
-                                           @PathVariable String directory) throws IOException {
+                                           HttpServletRequest request) throws IOException {
 
+        String directory = request.getRequestURI()
+                .split(request.getContextPath() + "/copy/")[1];
         try {
             fileService.copyFile(id, directory);
             return new ResponseEntity<>(String.format("File with id %s was copied to %s", id, directory)
