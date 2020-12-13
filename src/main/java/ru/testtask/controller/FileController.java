@@ -90,7 +90,7 @@ public class FileController {
 
     @PostMapping("/{id}/copy")
     public ResponseEntity<String> copyFile(@PathVariable String id,
-                                           @RequestParam String directory) throws IOException {
+                                           @RequestParam(value = "dir") String directory) throws IOException {
 
         try {
             fileService.copyFile(id, directory);

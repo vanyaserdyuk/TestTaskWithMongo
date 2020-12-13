@@ -142,22 +142,29 @@ public class FileService {
     public void copyFile(String id, String directory) throws IOException, FileNotFoundException {
         String newOriginalFileName;
         int i = 0;
+        Optional<FileData> optionalFileData = fileDataRepo.findById(id);
 
-        FileData fileData = getFileById(id);
+        if (optionalFileData.isEmpty()){
+            throw new FileNotFoundException(String.format("File with ID %s does not found", id));
+        }
 
-        Path destDirectory = storageRootPath.resolve(directory);
+        Path destDirectory = Paths.get(storageRoot + File.separator + directory);
 
+        FileData fileData = optionalFileData.get();
         String newFilename = UUID.randomUUID().toString() + "." + FilenameUtils.getExtension(fileData.getFilename());
+        Path from = getFileAbsolutePath(fileData);
+        fileData.setFilename(newFilename);
         Path destination = destDirectory.resolve(fileData.getFilename());
+
 
         try {
             if (!Files.exists(destDirectory)) {
                 Files.createDirectories(destDirectory);
             }
 
-            Files.copy(getFileAbsolutePath(fileData), destination);
+            Files.copy(from, destination);
         } catch (IOException e) {
-             log.error(String.format("An error occurred during copying the file with id %s", id));
+             e.printStackTrace();
             return;
         }
 
@@ -171,21 +178,15 @@ public class FileService {
         }
         while (fileDataNamesList.contains(newOriginalFileName));
 
-        fileData.setFilename(newFilename);
-
-        try {
-            fileData.setOriginalFilename(newOriginalFileName);
-            fileDataRepo.insert(fileData);
-        } catch (Exception e) {
-            for (int j = 0; j < 15; j++) {
-                String name = buildOriginalFilenameWhileCopy(fileData.getOriginalFilename(), j);
-                fileData.setOriginalFilename(name);
+        for (int j = 0; j < 15; j++) {
+            try {
+                fileData.setOriginalFilename(newOriginalFileName);
+                fileData.setId(null);
                 fileDataRepo.insert(fileData);
+            } catch (Exception e) {
+                log.warn("Trying...");
             }
         }
-
-        fileData.setId(null);
-
     }
 
     private String buildOriginalFilenameWhileCopy(String filename, int index){
@@ -242,7 +243,8 @@ public class FileService {
     }
 
     public Path getFileAbsolutePath(FileData fileData){
-        return Paths.get(storageRoot + File.separator + fileData.getDirectory() + File.separator + fileData.getFilename());
+        Path path = Paths.get(storageRoot + File.separator + fileData.getDirectory() + File.separator + fileData.getFilename());
+        return path;
     }
 
     public Path getStorageRootPath(){
