@@ -23,6 +23,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.junit.Assert.*;
 
@@ -41,10 +43,10 @@ public class FileServiceTest {
     @Autowired
     private TestUtils testUtils;
 
-    @After
-    public void clearDb() throws IOException {
-        testUtils.deleteAllFiles();
-    }
+//    @After
+//    public void clearDb() throws IOException {
+//        testUtils.deleteAllFiles();
+//    }
 
     @Test
     public void uploadFileTest(){
@@ -99,6 +101,7 @@ public class FileServiceTest {
         fileService.copyFile(fileData.getId(), "dir1");
         assertEquals(3, fileService.searchByRegex("test").size());
         assertNotNull(fileService.searchByRegex("test (0).jpg"));
+
     }
 
     @Test
@@ -139,4 +142,22 @@ public class FileServiceTest {
         assertEquals(1, fileDataList.size());
     }
 
+    @Test
+    public void multithreadingCopyTest() throws IOException {
+        FileData fileData = testUtils.createTestFileDataWithFile();
+
+        ExecutorService executorService = Executors.newFixedThreadPool(15);
+        for (int i = 0; i < 15; i++) {
+            executorService.submit(new Runnable() {
+                public void run() {
+                    try {
+                        fileService.copyFile(fileData.getId(), "dir");
+                    }
+                    catch (Exception e){
+                        fail();
+                    }
+                }
+            });
+        }
+    }
 }

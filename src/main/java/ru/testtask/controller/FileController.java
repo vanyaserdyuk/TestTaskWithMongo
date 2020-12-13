@@ -56,27 +56,22 @@ public class FileController {
         }
     }
 
-    @GetMapping("/find/regexp/{regexp}")
-    public ResponseEntity<List<FileDTO>> searchFileWithRegex(@PathVariable String regexp){
+    @GetMapping("/find/regexp")
+    public ResponseEntity<List<FileDTO>> searchFileWithRegex(@RequestParam String regexp){
         List<FileData> fileDatas = fileService.searchByRegex(regexp);
         List<FileDTO> fileDTOS = fileDatas.stream().map(fileData -> modelMapper.map(fileData, FileDTO.class)).collect(Collectors.toList());
         return new ResponseEntity<>(fileDTOS, HttpStatus.OK);
     }
 
-    @GetMapping("/find/dir/**")
-    public ResponseEntity<List<FileDTO>> getAllFiles(HttpServletRequest request){
-        String directory = request.getRequestURI()
-                .split(request.getContextPath() + "/dir/")[1];
-
+    @GetMapping("/find/dir")
+    public ResponseEntity<List<FileDTO>> getAllFiles(@RequestParam String directory){
         List<FileData> fileList = fileService.getFileListFromDirectory(directory);
         List<FileDTO> fileDTOS = fileList.stream().map(user -> modelMapper.map(fileList, FileDTO.class)).collect(Collectors.toList());
         return new ResponseEntity<>(fileDTOS, HttpStatus.OK);
     }
 
-    @PutMapping("/{id}/move/**")
-    public ResponseEntity<?> moveFile(@PathVariable String id, HttpServletRequest request) {
-        String directory = request.getRequestURI()
-                .split(request.getContextPath() + "/move/")[1];
+    @PutMapping("/{id}/move")
+    public ResponseEntity<?> moveFile(@PathVariable String id, @RequestParam String directory) {
         FileData fileData;
 
         try {
@@ -93,12 +88,10 @@ public class FileController {
 
     }
 
-    @PostMapping("/{id}/copy/force/?directory=/a/b/c&force=true")
+    @PostMapping("/{id}/copy")
     public ResponseEntity<String> copyFile(@PathVariable String id,
-                                           HttpServletRequest request) throws IOException {
+                                           @RequestParam String directory) throws IOException {
 
-        String directory = request.getRequestURI()
-                .split(request.getContextPath() + "/copy/")[1];
         try {
             fileService.copyFile(id, directory);
             return new ResponseEntity<>(String.format("File with id %s was copied to %s", id, directory)
@@ -120,4 +113,6 @@ public class FileController {
                         HttpStatus.NOT_FOUND);
             }
     }
+
+
 }

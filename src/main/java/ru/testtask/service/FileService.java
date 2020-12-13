@@ -1,21 +1,13 @@
 package ru.testtask.service;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
 import com.mongodb.MongoWriteException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.index.CompoundIndexDefinition;
-import org.springframework.data.mongodb.core.index.Index;
-import org.springframework.data.mongodb.core.index.TextIndexDefinition;
 import org.springframework.stereotype.Service;
 import ru.testtask.dto.UploadFileDTO;
 import ru.testtask.exception.FileIsToLargeException;
-import ru.testtask.exception.NameAlreadyExistsException;
 import ru.testtask.model.FileData;
 import ru.testtask.repo.FileDataRepo;
 
@@ -25,10 +17,12 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,7 +41,7 @@ public class FileService {
 
     private final FileDataRepo fileDataRepo;
 
-    public FileService(FileDataRepo fileDataRepo, MongoTemplate mongoTemplate) {
+    public FileService(FileDataRepo fileDataRepo) {
         this.fileDataRepo = fileDataRepo;
     }
 
@@ -91,24 +85,23 @@ public class FileService {
     }
 
     public List<FileData> getFileListFromDirectory(String directory){
-        String regex = "^/" + directory;
-        return fileDataRepo.findFileDataByRegexpDirectory(regex);
+        String path = null;
+        try {
+            path = normalizeDirectory(directory);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return fileDataRepo.findFileDataByRegexpDirectory(path);
     }
 
     public void removeFile(String id) throws FileNotFoundException {
-        Optional<FileData> optionalFileData = fileDataRepo.findById(id);
-            if (optionalFileData.isPresent()){
+        FileData fileData = getFileById(id);
                 try {
-                    FileData fileData = optionalFileData.get();
                     Files.deleteIfExists(getFileAbsolutePath(fileData));
                     fileDataRepo.deleteById(id);
                 } catch (IOException e){
                     log.error("Impossible to remove file", e);
                 }
-            }
-            else {
-                throw new FileNotFoundException(String.format("File with id %s does not found", id));
-            }
         }
 
     public List<FileData> searchByRegex(String regex){
@@ -117,13 +110,11 @@ public class FileService {
 
     public FileData moveFile(String id, String directory) throws FileNotFoundException {
         boolean success = false;
-        Optional<FileData> optionalFileData = fileDataRepo.findById(id);
-        if (optionalFileData.isEmpty()) {
-            throw new FileNotFoundException(String.format("File with id %s does not found", id));
-        }
-        FileData fileData = optionalFileData.get();
+
+        FileData fileData = getFileById(id);
         Path destDirectory = storageRootPath.resolve(directory);
         Path destination = destDirectory.resolve(fileData.getFilename());
+        String previousDirectory = fileData.getDirectory();
 
         try {
             if (!Files.exists(destDirectory)) {
@@ -139,27 +130,23 @@ public class FileService {
             log.error(String.format("An error occurred during moving the file with id %s", id));
         } catch (MongoWriteException e) {
             log.error("File with the same directory and filename already exists!");
-        }//finally {
-//
-//
-//        }
-
+        }finally {
+          if (!success) {
+              fileData.setDirectory(previousDirectory);
+              fileDataRepo.save(fileData);
+            }
+        }
         return fileData;
     }
 
     public void copyFile(String id, String directory) throws IOException, FileNotFoundException {
         String newOriginalFileName;
         int i = 0;
-        Optional<FileData> optionalFileData = fileDataRepo.findById(id);
 
-        if (optionalFileData.isEmpty()) {
-            throw new FileNotFoundException(String.format("File with ID %s does not found", id));
-        }
+        FileData fileData = getFileById(id);
 
         Path destDirectory = storageRootPath.resolve(directory);
-        ;
 
-        FileData fileData = optionalFileData.get();
         String newFilename = UUID.randomUUID().toString() + "." + FilenameUtils.getExtension(fileData.getFilename());
         Path destination = destDirectory.resolve(fileData.getFilename());
 
@@ -170,7 +157,7 @@ public class FileService {
 
             Files.copy(getFileAbsolutePath(fileData), destination);
         } catch (IOException e) {
-            log.error(String.format("An error occurred during copying the file with id %s", id));
+             log.error(String.format("An error occurred during copying the file with id %s", id));
             return;
         }
 
@@ -185,9 +172,20 @@ public class FileService {
         while (fileDataNamesList.contains(newOriginalFileName));
 
         fileData.setFilename(newFilename);
-        fileData.setOriginalFilename(newOriginalFileName);
+
+        try {
+            fileData.setOriginalFilename(newOriginalFileName);
+            fileDataRepo.insert(fileData);
+        } catch (Exception e) {
+            for (int j = 0; j < 15; j++) {
+                String name = buildOriginalFilenameWhileCopy(fileData.getOriginalFilename(), j);
+                fileData.setOriginalFilename(name);
+                fileDataRepo.insert(fileData);
+            }
+        }
+
         fileData.setId(null);
-        fileDataRepo.insert(fileData);
+
     }
 
     private String buildOriginalFilenameWhileCopy(String filename, int index){
@@ -233,18 +231,10 @@ public class FileService {
         FileData fileData;
 
         try {
-            Optional<FileData> optionalFileData = findFileById(id);
-            if (optionalFileData.isPresent()){
-                fileData = optionalFileData.get();
-                InputStream is = new FileInputStream(String.valueOf(getFileAbsolutePath(fileData)));
-                IOUtils.copy(is, response.getOutputStream());
-                response.flushBuffer();
-            }
-
-            else {
-                throw new FileNotFoundException("File does not exist");
-            }
-
+            fileData = getFileById(id);
+            InputStream is = new FileInputStream(String.valueOf(getFileAbsolutePath(fileData)));
+            IOUtils.copy(is, response.getOutputStream());
+            response.flushBuffer();
         } catch (IOException ex) {
             log.error("Error writing file to output stream. Filename was '{}'", id, ex);
             throw new RuntimeException("IOError writing file to output stream");
@@ -252,7 +242,7 @@ public class FileService {
     }
 
     public Path getFileAbsolutePath(FileData fileData){
-        return storageRootPath.resolve(fileData.getDirectory()).resolve(fileData.getFilename());
+        return Paths.get(storageRoot + File.separator + fileData.getDirectory() + File.separator + fileData.getFilename());
     }
 
     public Path getStorageRootPath(){
@@ -266,6 +256,30 @@ public class FileService {
         } else {
             throw new FileNotFoundException(String.format("File with id %s does not found", id));
         }
+    }
+
+    public String normalizeDirectory(String directory) throws Exception {
+        String path;
+        if (!directory.startsWith("/")){
+            path = "/" + directory;
+        }
+        else {
+            path = directory;
+        }
+
+        if (directory.matches("/+")){
+            throw new Exception("Wrong path name");
+        }
+
+        if (directory.matches(".{3,1000}")){
+            throw new Exception("Wrong path name");
+        }
+
+        if (directory.isEmpty()){
+            return "/";
+        }
+
+        return path;
     }
 
 }
