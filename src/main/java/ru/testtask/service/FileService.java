@@ -84,7 +84,7 @@ public class FileService {
         }
     }
 
-    public List<FileData> getFileListFromDirectory(String directory){
+    public List<FileData> getFileListFromDirectory(String directory) throws InvalidPathException{
         String path = null;
         try {
             path = normalizeDirectory(directory);
@@ -164,16 +164,16 @@ public class FileService {
 
             Files.copy(from, destination);
         } catch (IOException e) {
-             e.printStackTrace();
-            return;
+            log.error(String.format("An error occurred during moving the file with id %s", id));
         }
 
         List<FileData> fileDataList = fileDataRepo.findFileDataByRegexpFilename(FilenameUtils
                 .removeExtension(fileData.getOriginalFilename()));
         List<String> fileDataNamesList = fileDataList.stream().map(FileData::getOriginalFilename).collect(Collectors.toList());
+        String oldName = fileData.getOriginalFilename();
 
         do {
-            newOriginalFileName = buildOriginalFilenameWhileCopy(fileData.getOriginalFilename(), i);
+            newOriginalFileName = buildOriginalFilenameWhileCopy(oldName, i);
             i++;
         }
         while (fileDataNamesList.contains(newOriginalFileName));
@@ -183,7 +183,10 @@ public class FileService {
                 fileData.setOriginalFilename(newOriginalFileName);
                 fileData.setId(null);
                 fileDataRepo.insert(fileData);
+                break;
             } catch (Exception e) {
+                i++;
+                newOriginalFileName = buildOriginalFilenameWhileCopy(oldName, i);
                 log.warn("Trying...");
             }
         }
@@ -260,28 +263,26 @@ public class FileService {
         }
     }
 
-    public String normalizeDirectory(String directory) throws Exception {
-        String path;
-        if (!directory.startsWith("/")){
-            path = "/" + directory;
-        }
-        else {
-            path = directory;
+    public String normalizeDirectory(String directory) throws InvalidPathException {
+        Path path;
+        String pathName = FilenameUtils.separatorsToWindows(directory);
+
+        if (pathName.startsWith("\\")) {
+            path = Paths.get(pathName).normalize();
+        } else {
+            path = Paths.get("\\" + pathName).normalize();
         }
 
-        if (directory.matches("/+")){
-            throw new Exception("Wrong path name");
-        }
+        String newPathName = FilenameUtils.separatorsToUnix(path.toString());
 
-        if (directory.matches(".{3,1000}")){
-            throw new Exception("Wrong path name");
-        }
 
-        if (directory.isEmpty()){
+        if (directory.isEmpty()) {
             return "/";
         }
 
-        return path;
+        System.out.println(newPathName);
+
+        return newPathName;
     }
 
 }

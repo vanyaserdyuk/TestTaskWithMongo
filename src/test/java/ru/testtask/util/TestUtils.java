@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 @Service
 public class TestUtils {
@@ -73,6 +74,10 @@ public class TestUtils {
                 .build();
 
         fileDataRepo.insert(fileData3);
+    }
+
+    public List<FileData> getAllFiles(){
+        return fileDataRepo.findAll();
     }
 
 }

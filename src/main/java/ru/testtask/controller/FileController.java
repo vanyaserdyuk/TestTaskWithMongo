@@ -12,12 +12,13 @@ import ru.testtask.exception.NameAlreadyExistsException;
 import ru.testtask.model.FileData;
 import ru.testtask.service.FileService;
 
-import javax.servlet.http.HttpServletRequest;
+
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.nio.file.InvalidPathException;
 import java.util.List;
 
-import java.util.Optional;
+
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -57,21 +58,26 @@ public class FileController {
     }
 
     @GetMapping("/find/regexp")
-    public ResponseEntity<List<FileDTO>> searchFileWithRegex(@RequestParam String regexp){
+    public ResponseEntity<List<FileDTO>> searchFileWithRegex(@RequestParam(value = "dir") String regexp){
         List<FileData> fileDatas = fileService.searchByRegex(regexp);
         List<FileDTO> fileDTOS = fileDatas.stream().map(fileData -> modelMapper.map(fileData, FileDTO.class)).collect(Collectors.toList());
         return new ResponseEntity<>(fileDTOS, HttpStatus.OK);
     }
 
     @GetMapping("/find/dir")
-    public ResponseEntity<List<FileDTO>> getAllFiles(@RequestParam String directory){
-        List<FileData> fileList = fileService.getFileListFromDirectory(directory);
-        List<FileDTO> fileDTOS = fileList.stream().map(user -> modelMapper.map(fileList, FileDTO.class)).collect(Collectors.toList());
-        return new ResponseEntity<>(fileDTOS, HttpStatus.OK);
+    public ResponseEntity<List<FileDTO>> getAllFiles(@RequestParam(value = "dir") String directory){
+        try {
+            List<FileData> fileList = fileService.getFileListFromDirectory(directory);
+            List<FileDTO> fileDTOS = fileList.stream().map(user -> modelMapper.map(fileList, FileDTO.class)).collect(Collectors.toList());
+            return new ResponseEntity<>(fileDTOS, HttpStatus.OK);
+        }
+        catch (InvalidPathException e){
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
     }
 
     @PutMapping("/{id}/move")
-    public ResponseEntity<?> moveFile(@PathVariable String id, @RequestParam String directory) {
+    public ResponseEntity<?> moveFile(@PathVariable String id, @RequestParam(value = "dir") String directory) {
         FileData fileData;
 
         try {

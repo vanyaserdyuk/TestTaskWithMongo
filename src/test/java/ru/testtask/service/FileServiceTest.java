@@ -1,6 +1,7 @@
 package ru.testtask.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FilenameUtils;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,6 +22,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -43,10 +45,10 @@ public class FileServiceTest {
     @Autowired
     private TestUtils testUtils;
 
-//    @After
-//    public void clearDb() throws IOException {
-//        testUtils.deleteAllFiles();
-//    }
+    @After
+    public void clearDb() throws IOException {
+        testUtils.deleteAllFiles();
+    }
 
     @Test
     public void uploadFileTest(){
@@ -79,10 +81,8 @@ public class FileServiceTest {
     }
 
     @Test
-    public void moveFileTest() throws FileNotFoundException {
-        UploadFileDTO uploadFileDTO = UploadFileDTO.builder().fileUrl(testUrl)
-                .fileName("b").build();
-        FileData fileData = fileService.uploadFile(uploadFileDTO);
+    public void moveFileTest() throws IOException {
+        FileData fileData = testUtils.createTestFileDataWithFile();
         fileData = fileService.moveFile(fileData.getId(), "a/b/c");
         assertFalse(Files.exists(fileService.getFileAbsolutePath(fileData)));
         assertTrue(Files.exists(Paths.get(fileService.getStorageRootPath().toString() + File.separator +
@@ -92,9 +92,7 @@ public class FileServiceTest {
 
     @Test
     public void copyFileTest() throws IOException {
-        UploadFileDTO uploadFileDTO = UploadFileDTO.builder().fileUrl(testUrl)
-                .fileName("test").build();
-        FileData fileData = fileService.uploadFile(uploadFileDTO);
+        FileData fileData = testUtils.createTestFileDataWithFile();
         fileService.copyFile(fileData.getId(), "dir1");
         assertTrue(Files.exists(Paths.get(fileService.getStorageRootPath().toString() + File.separator + "dir1")));
         assertEquals(2, fileService.searchByRegex("test").size());
@@ -144,20 +142,22 @@ public class FileServiceTest {
 
     @Test
     public void multithreadingCopyTest() throws IOException {
+        String filename;
         FileData fileData = testUtils.createTestFileDataWithFile();
 
         ExecutorService executorService = Executors.newFixedThreadPool(15);
         for (int i = 0; i < 15; i++) {
-            executorService.submit(new Runnable() {
-                public void run() {
-                    try {
-                        fileService.copyFile(fileData.getId(), "dir");
-                    }
-                    catch (Exception e){
-                        fail();
-                    }
+            executorService.submit(() -> {
+                try {
+                    fileService.copyFile(fileData.getId(), "dir");
+                    System.out.println("done!");
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             });
         }
+
+        List<FileData> fileDataList = testUtils.getAllFiles();
+        assertEquals(16, fileDataList.size());
     }
 }
