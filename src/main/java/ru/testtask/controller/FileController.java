@@ -58,7 +58,7 @@ public class FileController {
     }
 
     @GetMapping("/find/regexp")
-    public ResponseEntity<List<FileDTO>> searchFileWithRegex(@RequestParam(value = "dir") String regexp){
+    public ResponseEntity<List<FileDTO>> searchFileWithRegex(@RequestParam(value = "regexp") String regexp){
         List<FileData> fileDatas = fileService.searchByRegex(regexp);
         List<FileDTO> fileDTOS = fileDatas.stream().map(fileData -> modelMapper.map(fileData, FileDTO.class)).collect(Collectors.toList());
         return new ResponseEntity<>(fileDTOS, HttpStatus.OK);
@@ -88,6 +88,9 @@ public class FileController {
         } catch (FileNotFoundException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+        catch (InvalidPathException e){
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
 
         return new ResponseEntity<>(modelMapper.map(fileData, FileDTO.class)
                 , HttpStatus.OK);
@@ -105,6 +108,10 @@ public class FileController {
         } catch (FileNotFoundException e){
              return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
+        catch (InvalidPathException e){
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
     }
 
     @GetMapping("/{id}/download")

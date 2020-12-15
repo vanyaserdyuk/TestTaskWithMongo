@@ -70,7 +70,7 @@ public class FileService {
                     .filename(filename)
                     .size(Files.size(tempFile.toPath()))
                     .type(Files.probeContentType(path))
-                    .directory("/")
+                    .directory("")
                     .build();
 
             fileDataRepo.insert(fileData);
@@ -85,12 +85,7 @@ public class FileService {
     }
 
     public List<FileData> getFileListFromDirectory(String directory) throws InvalidPathException{
-        String path = null;
-        try {
-            path = normalizeDirectory(directory);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        String path = normalizeDirectory(directory);
         return fileDataRepo.findFileDataByRegexpDirectory(path);
     }
 
@@ -109,21 +104,24 @@ public class FileService {
     }
 
     public FileData moveFile(String id, String directory) throws FileNotFoundException {
+        String path = normalizeDirectory(directory);
+
         boolean success = false;
 
         FileData fileData = getFileById(id);
-        Path destDirectory = storageRootPath.resolve(directory);
+        Path destDirectory = storageRootPath.resolve(path);
         Path destination = destDirectory.resolve(fileData.getFilename());
-        String previousDirectory = fileData.getDirectory();
+        String sourceDirectory = fileData.getDirectory();
+        Path sourcePath = getFileAbsolutePath(fileData);
 
         try {
             if (!Files.exists(destDirectory)) {
                 Files.createDirectories(destDirectory);
             }
 
-            fileData.setDirectory("/" + directory);
+            fileData.setDirectory(path);
             fileDataRepo.save(fileData);
-            Files.move(getFileAbsolutePath(fileData), destination);
+            Files.move(sourcePath, destination);
             success = true;
 
         } catch (IOException e) {
@@ -132,27 +130,24 @@ public class FileService {
             log.error("File with the same directory and filename already exists!");
         }finally {
           if (!success) {
-              fileData.setDirectory(previousDirectory);
+              fileData.setDirectory(sourceDirectory);
               fileDataRepo.save(fileData);
             }
         }
         return fileData;
     }
 
-    public void copyFile(String id, String directory) throws IOException, FileNotFoundException {
+    public FileData copyFile(String id, String directory) throws FileNotFoundException, InvalidPathException {
+        String path = normalizeDirectory(directory);
         String newOriginalFileName;
+        FileData copiedFileData = null;
         int i = 0;
-        Optional<FileData> optionalFileData = fileDataRepo.findById(id);
+        FileData fileData = getFileById(id);
+        boolean success = false;
 
-        if (optionalFileData.isEmpty()){
-            throw new FileNotFoundException(String.format("File with ID %s does not found", id));
-        }
-
-        Path destDirectory = Paths.get(storageRoot + File.separator + directory);
-
-        FileData fileData = optionalFileData.get();
+        Path destDirectory = Paths.get(storageRoot).resolve(path);
         String newFilename = UUID.randomUUID().toString() + "." + FilenameUtils.getExtension(fileData.getFilename());
-        Path from = getFileAbsolutePath(fileData);
+        Path sourcePath = getFileAbsolutePath(fileData);
         fileData.setFilename(newFilename);
         Path destination = destDirectory.resolve(fileData.getFilename());
 
@@ -162,39 +157,42 @@ public class FileService {
                 Files.createDirectories(destDirectory);
             }
 
-            Files.copy(from, destination);
-        } catch (IOException e) {
-            log.error(String.format("An error occurred during moving the file with id %s", id));
-        }
+            Files.copy(sourcePath, destination);
 
-        List<FileData> fileDataList = fileDataRepo.findFileDataByRegexpFilename(FilenameUtils
-                .removeExtension(fileData.getOriginalFilename()));
-        List<String> fileDataNamesList = fileDataList.stream().map(FileData::getOriginalFilename).collect(Collectors.toList());
-        String oldName = fileData.getOriginalFilename();
+            List<FileData> fileDataList = fileDataRepo.findFileDataByRegexpFilename(FilenameUtils
+                    .removeExtension(fileData.getOriginalFilename()));
+            List<String> fileDataNamesList = fileDataList.stream().map(FileData::getOriginalFilename).collect(Collectors.toList());
+            String oldName = fileData.getOriginalFilename();
 
-        do {
-            newOriginalFileName = buildOriginalFilenameWhileCopy(oldName, i);
-            i++;
-        }
-        while (fileDataNamesList.contains(newOriginalFileName));
-
-        for (int j = 0; j < 15; j++) {
-            try {
-                fileData.setOriginalFilename(newOriginalFileName);
-                fileData.setId(null);
-                fileDataRepo.insert(fileData);
-                break;
-            } catch (Exception e) {
-                i++;
+            do {
                 newOriginalFileName = buildOriginalFilenameWhileCopy(oldName, i);
-                log.warn("Trying...");
+                i++;
             }
+            while (fileDataNamesList.contains(newOriginalFileName));
+
+            for (int j = 0; j < 15; j++) {
+                try {
+                    fileData.setOriginalFilename(newOriginalFileName);
+                    fileData.setId(null);
+                    copiedFileData = fileDataRepo.insert(fileData);
+                } catch (Exception e) {
+                    i++;
+                    newOriginalFileName = buildOriginalFilenameWhileCopy(oldName, i);
+                    log.warn("Trying...");
+                }
+            }
+            success = true;
+        } catch (IOException e) {
+            log.error(String.format("An error occurred during moving the file with id %s", id), e);
+            throw new RuntimeException("");
         }
+
+        return copiedFileData;
     }
 
     private String buildOriginalFilenameWhileCopy(String filename, int index){
         return FilenameUtils.removeExtension(filename)
-                + " (" + index + ")." + FilenameUtils.getExtension(filename);
+                + String.format(" ( + %d + ).", index) + FilenameUtils.getExtension(filename);
     }
 
     public Optional<FileData> findFileById(String id){
@@ -232,10 +230,9 @@ public class FileService {
     }
 
     public void getFileContent(String id, HttpServletResponse response) throws FileNotFoundException {
-        FileData fileData;
+        FileData fileData = getFileById(id);
 
         try {
-            fileData = getFileById(id);
             InputStream is = new FileInputStream(String.valueOf(getFileAbsolutePath(fileData)));
             IOUtils.copy(is, response.getOutputStream());
             response.flushBuffer();
@@ -246,8 +243,7 @@ public class FileService {
     }
 
     public Path getFileAbsolutePath(FileData fileData){
-        Path path = Paths.get(storageRoot + File.separator + fileData.getDirectory() + File.separator + fileData.getFilename());
-        return path;
+        return Paths.get(storageRoot).resolve(fileData.getDirectory()).resolve(fileData.getFilename());
     }
 
     public Path getStorageRootPath(){
@@ -263,25 +259,24 @@ public class FileService {
         }
     }
 
-    public String normalizeDirectory(String directory) throws InvalidPathException {
-        Path path;
-        String pathName = FilenameUtils.separatorsToWindows(directory);
 
-        if (pathName.startsWith("\\")) {
-            path = Paths.get(pathName).normalize();
-        } else {
-            path = Paths.get("\\" + pathName).normalize();
-        }
-
-        String newPathName = FilenameUtils.separatorsToUnix(path.toString());
-
-
+    private String normalizeDirectory(String directory) throws InvalidPathException {
         if (directory.isEmpty()) {
             return "/";
         }
 
-        System.out.println(newPathName);
+        Path path;
+        String pathName = FilenameUtils.separatorsToWindows(directory);
 
+            path = Paths.get(pathName).normalize();
+
+        String newPathName = FilenameUtils.separatorsToUnix(path.toString());
+
+        if (newPathName.startsWith("/")) {
+            newPathName = newPathName.replaceFirst("/", "");
+        }
+
+        System.out.println(newPathName);
         return newPathName;
     }
 

@@ -3,6 +3,7 @@ package ru.testtask.service;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,12 +22,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 
@@ -45,7 +48,7 @@ public class FileServiceTest {
     @Autowired
     private TestUtils testUtils;
 
-    @After
+    @Before
     public void clearDb() throws IOException {
         testUtils.deleteAllFiles();
     }
@@ -57,7 +60,7 @@ public class FileServiceTest {
         FileData fileData = fileService.uploadFile(uploadFileDTO);
         assertNotNull(fileData.getFilename());
         assertEquals("b", fileData.getOriginalFilename());
-        assertEquals("/", fileData.getDirectory());
+        assertEquals("", fileData.getDirectory());
         assertEquals("image/jpeg", fileData.getType());
         assertNotNull(fileData.getId());
         assertEquals(10158, fileData.getSize());
@@ -65,11 +68,11 @@ public class FileServiceTest {
     }
 
     @Test
-    public void removeFileTest() throws FileNotFoundException {
-        FileData fileData = testUtils.createTestFileData();
+    public void removeFileTest() throws IOException {
+        FileData fileData = testUtils.createTestFileDataWithFile();
         fileService.removeFile(fileData.getId());
         assertEquals(Optional.empty(), fileService.findFileById(fileData.getId()));
-        assertFalse(Files.exists(fileService.getStorageRootPath().resolve(fileData.getFilename())));
+        assertFalse(Files.exists(fileService.getFileAbsolutePath(fileData)));
     }
 
     @Test(expected = FileIsToLargeException.class)
@@ -83,23 +86,25 @@ public class FileServiceTest {
     @Test
     public void moveFileTest() throws IOException {
         FileData fileData = testUtils.createTestFileDataWithFile();
+        Path sourcePath = fileService.getFileAbsolutePath(fileData);
         fileData = fileService.moveFile(fileData.getId(), "a/b/c");
-        assertFalse(Files.exists(fileService.getFileAbsolutePath(fileData)));
-        assertTrue(Files.exists(Paths.get(fileService.getStorageRootPath().toString() + File.separator +
-                "/a/b/c" + File.separator + fileData.getFilename())));
-        assertEquals("/a/b/c", fileData.getDirectory());
+        assertFalse(Files.exists(sourcePath));
+        assertTrue(Files.exists(fileService.getStorageRootPath()
+                .resolve("a/b/c").resolve(fileData.getFilename())));
+        assertEquals("a/b/c", fileData.getDirectory());
     }
 
     @Test
     public void copyFileTest() throws IOException {
         FileData fileData = testUtils.createTestFileDataWithFile();
-        fileService.copyFile(fileData.getId(), "dir1");
-        assertTrue(Files.exists(Paths.get(fileService.getStorageRootPath().toString() + File.separator + "dir1")));
+        FileData copiedFileData = fileService.copyFile(fileData.getId(), "dir1");
+        copiedFileData = fileService.getFileById(copiedFileData.getId());
+        assertEquals("dir1", copiedFileData.getDirectory());
+        assertTrue(Files.exists(fileService.getFileAbsolutePath(copiedFileData)));
         assertEquals(2, fileService.searchByRegex("test").size());
         fileService.copyFile(fileData.getId(), "dir1");
         assertEquals(3, fileService.searchByRegex("test").size());
         assertNotNull(fileService.searchByRegex("test (0).jpg"));
-
     }
 
     @Test
@@ -141,8 +146,7 @@ public class FileServiceTest {
     }
 
     @Test
-    public void multithreadingCopyTest() throws IOException {
-        String filename;
+    public void multithreadingCopyTest() throws IOException, InterruptedException {
         FileData fileData = testUtils.createTestFileDataWithFile();
 
         ExecutorService executorService = Executors.newFixedThreadPool(15);
@@ -150,13 +154,15 @@ public class FileServiceTest {
             executorService.submit(() -> {
                 try {
                     fileService.copyFile(fileData.getId(), "dir");
-                    System.out.println("done!");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             });
         }
 
+
+        executorService.shutdown();
+        executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
         List<FileData> fileDataList = testUtils.getAllFiles();
         assertEquals(16, fileDataList.size());
     }
