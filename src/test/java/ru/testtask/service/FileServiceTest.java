@@ -104,7 +104,7 @@ public class FileServiceTest {
         assertEquals(2, fileService.searchByRegex("test").size());
         fileService.copyFile(fileData.getId(), "dir1");
         assertEquals(3, fileService.searchByRegex("test").size());
-        assertNotNull(fileService.searchByRegex("test (0).jpg"));
+        assertNotNull(fileService.searchByRegex("testFile (0)."));
     }
 
     @Test
@@ -139,7 +139,7 @@ public class FileServiceTest {
         assertEquals(1, fileDataList.size());
 
         fileDataList = fileService.getFileListFromDirectory("dir3");
-        assertEquals(0, fileDataList.size());
+        assertEquals(1, fileDataList.size());
 
         fileDataList = fileService.getFileListFromDirectory("folder");
         assertEquals(1, fileDataList.size());

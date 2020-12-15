@@ -146,6 +146,8 @@ public class FileService {
         boolean success = false;
 
         Path destDirectory = Paths.get(storageRoot).resolve(path);
+        String oldOriginalFilename = fileData.getOriginalFilename();
+        String oldId = fileData.getId();
         String newFilename = UUID.randomUUID().toString() + "." + FilenameUtils.getExtension(fileData.getFilename());
         Path sourcePath = getFileAbsolutePath(fileData);
         fileData.setFilename(newFilename);
@@ -174,7 +176,9 @@ public class FileService {
                 try {
                     fileData.setOriginalFilename(newOriginalFileName);
                     fileData.setId(null);
+                    fileData.setDirectory(path);
                     copiedFileData = fileDataRepo.insert(fileData);
+                    break;
                 } catch (Exception e) {
                     i++;
                     newOriginalFileName = buildOriginalFilenameWhileCopy(oldName, i);
@@ -185,6 +189,13 @@ public class FileService {
         } catch (IOException e) {
             log.error(String.format("An error occurred during moving the file with id %s", id), e);
             throw new RuntimeException("");
+        } finally {
+            if (!success) {
+                fileData.setDirectory(sourcePath.toString());
+                fileData.setOriginalFilename(oldOriginalFilename);
+                fileData.setId(oldId);
+                fileDataRepo.save(fileData);
+            }
         }
 
         return copiedFileData;
@@ -192,7 +203,7 @@ public class FileService {
 
     private String buildOriginalFilenameWhileCopy(String filename, int index){
         return FilenameUtils.removeExtension(filename)
-                + String.format(" ( + %d + ).", index) + FilenameUtils.getExtension(filename);
+                + String.format(" (%d).", index) + FilenameUtils.getExtension(filename);
     }
 
     public Optional<FileData> findFileById(String id){
@@ -243,7 +254,7 @@ public class FileService {
     }
 
     public Path getFileAbsolutePath(FileData fileData){
-        return Paths.get(storageRoot).resolve(fileData.getDirectory()).resolve(fileData.getFilename());
+        return Paths.get(storageRoot, fileData.getDirectory(), fileData.getFilename());
     }
 
     public Path getStorageRootPath(){
