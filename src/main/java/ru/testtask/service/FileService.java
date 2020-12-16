@@ -202,8 +202,8 @@ public class FileService {
     }
 
     private String buildOriginalFilenameWhileCopy(String filename, int index){
-        return FilenameUtils.removeExtension(filename)
-                + String.format(" (%d).", index) + FilenameUtils.getExtension(filename);
+        return String.format("%s (%d).%s",
+                FilenameUtils.removeExtension(filename), index, FilenameUtils.getExtension(filename));
     }
 
     public Optional<FileData> findFileById(String id){
