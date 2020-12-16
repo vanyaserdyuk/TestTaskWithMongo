@@ -91,7 +91,7 @@ public class MainController {
         return new ResponseEntity<>(String.format("Project with ID %s removed successfully", id), HttpStatus.NO_CONTENT);
     }
 
-    @PreAuthorize("hasAuthority('MODERATOR') ")
+    @PreAuthorize("hasAuthority('MODERATOR') or projectService.isCurrentUserOwnerOf(#id)")
     @PutMapping("/{id}")
     public ResponseEntity<Project> updateProject(@PathVariable("id") String id, @RequestBody ProjectDTO projectDTO) {
         if (!projectDTO.getId().equals(id)){
