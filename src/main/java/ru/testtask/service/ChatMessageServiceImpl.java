@@ -29,7 +29,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     public static final String WS_SESSION_ATTRIBUTE_ROOM_ID = "room_id";
     public static final String CHAT_ROOM_TOPIC = "/channel";
 
-    @Value("${chat.message.max-length}")
+    @Value("${chat.message.max-length:1000}")
     private long maxMessageLength;
 
     private final SimpMessageSendingOperations messagingTemplate;
