@@ -10,10 +10,8 @@ import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import ru.testtask.model.Message;
 
-import javax.annotation.PostConstruct;
-import java.security.Principal;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import static java.lang.String.format;
 
@@ -21,29 +19,11 @@ import static java.lang.String.format;
 @Component
 public class WebSocketEventListener {
 
-    private final List<String> usernames = new ArrayList<String>();
-    private final String dest = "/channel";
+    public static final Set<String> usernames = new CopyOnWriteArraySet<>();
+    public static final String dest = "/channel";
 
     @Autowired
     private SimpMessageSendingOperations messagingTemplate;
-
-    @PostConstruct
-    public void init(){
-        Thread heartBeat = new Thread(new Runnable() {
-            @Override
-            public void run(){
-                usernames.forEach(username -> messagingTemplate.convertAndSendToUser(username, dest, "ok"));
-                try {
-                    Thread.sleep(60000);
-                } catch (InterruptedException e) {
-                    log.error("Thread was interrupted");
-                }
-            }
-        });
-
-        heartBeat.setDaemon(true);
-        heartBeat.start();
-    }
 
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
@@ -68,7 +48,7 @@ public class WebSocketEventListener {
     }
 
     public void addUsername(String username){
-        this.usernames.add(username);
+        usernames.add(username);
     }
 
 }

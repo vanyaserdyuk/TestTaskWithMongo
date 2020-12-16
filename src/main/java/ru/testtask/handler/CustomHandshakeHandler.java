@@ -12,16 +12,12 @@ import java.util.Map;
 import java.util.UUID;
 
 public class CustomHandshakeHandler extends DefaultHandshakeHandler {
-    @Autowired
-    private WebSocketEventListener webSocketEventListener;
-
     @Override
     protected Principal determineUser(ServerHttpRequest request,
                                       WebSocketHandler wsHandler,
                                       Map<String, Object> attributes) {
 
         String name = UUID.randomUUID().toString();
-        webSocketEventListener.addUsername(name);
         return new StompPrincipal(name);
     }
 }
