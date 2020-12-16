@@ -36,7 +36,7 @@ public class FileService {
 
     private Path temporaryDir;
 
-    @Value("${storage.file.max-size.mb}")
+    @Value("${storage.file.max-size.mb:500}")
     private long fileMaxSizeMb;
 
     private final FileDataRepo fileDataRepo;
@@ -48,9 +48,10 @@ public class FileService {
     @PostConstruct
     public void init(){
         storageRootPath = Paths.get(storageRoot);
+        temporaryDir = storageRootPath.resolve("temp");
         if (Files.notExists(storageRootPath)){
             try {
-                Files.createDirectories(storageRootPath);
+                Files.createDirectories(temporaryDir);
             } catch (IOException e) {
                 log.error(String.format("It is impossible to create storage root directory : %s", storageRoot), e);
                 System.exit(-1);
@@ -59,14 +60,16 @@ public class FileService {
     }
 
     public FileData uploadFile(UploadFileDTO uploadFileDTO) throws FileIsToLargeException{
+        FileData fileData = null;
+        File tempFile = null;
+        boolean success = false;
         try {
             URL url = new URL(uploadFileDTO.getFileUrl());
             String filename = UUID.randomUUID().toString() + "." + FilenameUtils.getExtension(url.toString());
-            temporaryDir = Files.createTempDirectory(storageRootPath, "temp");
             Path path = storageRootPath.resolve(filename);
-            File tempFile = uploadFileFromUrl(url);
+            tempFile = uploadFileFromUrl(url);
 
-            FileData fileData = FileData.builder().originalFilename(uploadFileDTO.getFileName())
+            fileData = FileData.builder().originalFilename(uploadFileDTO.getFileName())
                     .filename(filename)
                     .size(Files.size(tempFile.toPath()))
                     .type(Files.probeContentType(path))
@@ -75,12 +78,24 @@ public class FileService {
 
             fileDataRepo.insert(fileData);
             Files.move(tempFile.toPath(), path);
-            Files.deleteIfExists(tempFile.toPath());
-            Files.deleteIfExists(temporaryDir);
+
+            success = true;
             return fileData;
         } catch (IOException e) {
-            log.error("An error occurred during uploading file");
+            log.error("An error occurred during uploading file", e);
             return null;
+        } finally {
+            if (tempFile != null) {
+                try {
+                    Files.deleteIfExists(tempFile.toPath());
+                }
+                catch (IOException e){
+                    log.error("Impossible to delete tempFile", e);
+                }
+            }
+            if (!success && fileData != null){
+                fileDataRepo.deleteById(fileData.getId());
+            }
         }
     }
 
@@ -125,9 +140,9 @@ public class FileService {
             success = true;
 
         } catch (IOException e) {
-            log.error(String.format("An error occurred during moving the file with id %s", id));
+            log.error(String.format("An error occurred during moving the file with id %s", id), e);
         } catch (MongoWriteException e) {
-            log.error("File with the same directory and filename already exists!");
+            log.error("File with the same directory and filename already exists!", e);
         }finally {
           if (!success) {
               fileData.setDirectory(sourceDirectory);
@@ -148,6 +163,7 @@ public class FileService {
         Path destDirectory = Paths.get(storageRoot).resolve(path);
         String oldOriginalFilename = fileData.getOriginalFilename();
         String oldId = fileData.getId();
+        String sourceDirectory = fileData.getDirectory();
         String newFilename = UUID.randomUUID().toString() + "." + FilenameUtils.getExtension(fileData.getFilename());
         Path sourcePath = getFileAbsolutePath(fileData);
         fileData.setFilename(newFilename);
@@ -182,7 +198,6 @@ public class FileService {
                 } catch (Exception e) {
                     i++;
                     newOriginalFileName = buildOriginalFilenameWhileCopy(oldName, i);
-                    log.warn("Trying...");
                 }
             }
             success = true;
@@ -191,7 +206,7 @@ public class FileService {
             throw new RuntimeException("");
         } finally {
             if (!success) {
-                fileData.setDirectory(sourcePath.toString());
+                fileData.setDirectory(sourceDirectory);
                 fileData.setOriginalFilename(oldOriginalFilename);
                 fileData.setId(oldId);
                 fileDataRepo.save(fileData);
@@ -273,7 +288,7 @@ public class FileService {
 
     private String normalizeDirectory(String directory) throws InvalidPathException {
         if (directory.isEmpty()) {
-            return "/";
+            return "";
         }
 
         Path path;

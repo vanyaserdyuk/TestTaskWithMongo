@@ -154,9 +154,7 @@ public class FileServiceTest {
             });
         }
 
-
-        executorService.shutdown();
-        executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        executorService.awaitTermination(10, TimeUnit.SECONDS);
         List<FileData> fileDataList = testUtils.getAllFiles();
         assertEquals(16, fileDataList.size());
     }
