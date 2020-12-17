@@ -1,15 +1,11 @@
 package ru.testtask.model;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@Builder
+import java.security.Principal;
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
-public class Attribute {
-    private String id;
+public class StompPrincipal implements Principal {
     private String name;
 }
