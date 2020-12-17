@@ -26,19 +26,15 @@ public class UserService{
 
     private final UserRepo userRepo;
 
-    private final MongoTemplate mongoTemplate;
-
     private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepo userRepo, MongoTemplate mongoTemplate, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepo userRepo, PasswordEncoder passwordEncoder) {
         this.userRepo = userRepo;
-        this.mongoTemplate = mongoTemplate;
         this.passwordEncoder = passwordEncoder;
     }
 
     @PostConstruct
     public void init(){
-        mongoTemplate.indexOps("users").ensureIndex(new Index("username", Sort.Direction.ASC).unique());
         createDefaultUsers();
     }
 
