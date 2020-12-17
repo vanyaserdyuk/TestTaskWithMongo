@@ -16,7 +16,7 @@ import static ru.testtask.service.ChatMessageServiceImpl.WS_SESSION_ATTRIBUTE_US
 @Component
 public class WebSocketEventListener {
 
-    private final ChatMessageServiceImpl chatMessageService;
+    private final ChatMessageService chatMessageService;
 
     public WebSocketEventListener(ChatMessageServiceImpl chatMessageService) {
         this.chatMessageService = chatMessageService;

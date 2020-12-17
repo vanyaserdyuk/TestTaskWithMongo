@@ -48,6 +48,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         this.modelMapper = modelMapper;
     }
 
+    @Override
     public void sendUserMessage(String roomId, String username, String content){
         Optional<ChatRoom> optionalChatRoom = chatRoomService.getRoomById(roomId);
         ChatMessage chatMessage = new ChatMessage();
@@ -69,29 +70,33 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         }
     }
 
+    @Override
     public Page<ChatMessage> findAllByRoom(String roomId, int page, int pageSize){
         Pageable pageable = PageRequest.of(page, pageSize, Sort.by(Sort.Direction.DESC, "date"));
         return messageRepo.findByChatRoomId(pageable, roomId);
     }
 
+    @Override
     public Page<ChatMessage> findAllByRoom(String roomId){
         Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE, Sort.by(Sort.Direction.DESC, "date"));
         return messageRepo.findByChatRoomId(pageable, roomId);
     }
 
+    @Override
     public void sendUserJoinToRoom(String roomId, String username){
         ChatMessageServiceDTO chatMessageServiceDTO = ChatMessageServiceDTO.builder()
                 .type(MessageType.JOIN).username(username).build();
         sendServiceMessage(roomId, chatMessageServiceDTO);
     }
 
+    @Override
     public void sendUserLeaveFromRoom(String roomId, String username){
         ChatMessageServiceDTO chatMessageServiceDTO = ChatMessageServiceDTO.builder()
                 .type(MessageType.LEAVE).username(username).build();
         sendServiceMessage(roomId, chatMessageServiceDTO);
     }
 
-    public void sendServiceMessage(String roomId, ChatMessageServiceDTO chatMessageServiceDTO){
+    private void sendServiceMessage(String roomId, ChatMessageServiceDTO chatMessageServiceDTO){
         messagingTemplate.convertAndSend(CHAT_ROOM_TOPIC + "/" + roomId, chatMessageServiceDTO);
     }
 

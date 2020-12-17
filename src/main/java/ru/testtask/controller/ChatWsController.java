@@ -7,6 +7,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.stereotype.Controller;
 import ru.testtask.dto.ChatMessageUserDTO;
+import ru.testtask.service.ChatMessageService;
 import ru.testtask.service.ChatMessageServiceImpl;
 
 import static ru.testtask.service.ChatMessageServiceImpl.WS_SESSION_ATTRIBUTE_ROOM_ID;
@@ -16,15 +17,15 @@ import static ru.testtask.service.ChatMessageServiceImpl.WS_SESSION_ATTRIBUTE_US
 @Controller
 public class ChatWsController {
 
-    private final ChatMessageServiceImpl chatMessageServiceImpl;
+    private final ChatMessageService chatMessageService;
 
-    public ChatWsController(ChatMessageServiceImpl chatMessageServiceImpl) {
-        this.chatMessageServiceImpl = chatMessageServiceImpl;
+    public ChatWsController(ChatMessageServiceImpl chatMessageService) {
+        this.chatMessageService = chatMessageService;
     }
 
     @MessageMapping("/ws/chat/room/{roomId}/message/send")
     public void sendMessage(@DestinationVariable String roomId, @Payload ChatMessageUserDTO chatMessageDTO) {
-        chatMessageServiceImpl.sendUserMessage(roomId, chatMessageDTO.getSender(), chatMessageDTO.getContent());
+        chatMessageService.sendUserMessage(roomId, chatMessageDTO.getSender(), chatMessageDTO.getContent());
     }
 
     @MessageMapping("/ws/chat/room/{roomId}/user/add")
@@ -32,9 +33,9 @@ public class ChatWsController {
                               SimpMessageHeaderAccessor headerAccessor) {
         String currentRoomId = (String) headerAccessor.getSessionAttributes().put(WS_SESSION_ATTRIBUTE_ROOM_ID, roomId);
         if (currentRoomId != null) {
-            chatMessageServiceImpl.sendUserLeaveFromRoom(roomId, username);
+            chatMessageService.sendUserLeaveFromRoom(roomId, username);
         }
         headerAccessor.getSessionAttributes().put(WS_SESSION_ATTRIBUTE_USERNAME, username);
-        chatMessageServiceImpl.sendUserJoinToRoom(roomId, username);
+        chatMessageService.sendUserJoinToRoom(roomId, username);
     }
 }

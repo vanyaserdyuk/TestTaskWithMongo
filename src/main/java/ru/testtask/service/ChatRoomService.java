@@ -18,16 +18,8 @@ public class ChatRoomService {
 
     private final ChatRoomRepo chatRoomRepo;
 
-    private final MongoTemplate mongoTemplate;
-
-    public ChatRoomService(ChatRoomRepo chatRoomRepo, MongoTemplate mongoTemplate) {
+    public ChatRoomService(ChatRoomRepo chatRoomRepo) {
         this.chatRoomRepo = chatRoomRepo;
-        this.mongoTemplate = mongoTemplate;
-    }
-
-    @PostConstruct
-    public void init(){
-        mongoTemplate.indexOps("chatRooms").ensureIndex(new Index("roomName", Sort.Direction.ASC).unique());
     }
 
     public ChatRoom addChatRoomIfNotExists(String roomName){
