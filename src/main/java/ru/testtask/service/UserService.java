@@ -6,6 +6,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import ru.testtask.exception.NameAlreadyExistsException;
@@ -38,8 +39,14 @@ public class UserService{
         createDefaultUsers();
     }
 
-    public User getUserByUsername(String username) {
-        return userRepo.findByUsername(username);
+    public User getUserByUsername(String username) throws UsernameNotFoundException {
+        Optional<User> optionalUser = userRepo.findByUsername(username);
+        if (optionalUser.isPresent()) {
+            return optionalUser.get();
+        }
+        else {
+            throw new UsernameNotFoundException(String.format("User with username %s does not exist", username));
+        }
     }
 
     public String getCurrentUserId() throws WrongMethodUseException {
@@ -99,14 +106,16 @@ public class UserService{
         return getUserByUsername(username) != null;
     }
 
-    public User getAuthorizedUser(String username, String password) {
-        User user = userRepo.findByUsername(username);
-        if (user != null) {
-            if (passwordEncoder.matches(password, user.getPassword())) {
-                return user;
+    public User getAuthorizedUser(String username, String password) throws UsernameNotFoundException {
+        Optional<User> user = userRepo.findByUsername(username);
+        if (user.isPresent()) {
+            if (passwordEncoder.matches(password, user.get().getPassword())) {
+                return user.get();
             }
         }
-        return null;
+        else {
+            throw new UsernameNotFoundException(String.format("User with username %s does not exist", username));
+        }
+        return user.get();
     }
-
 }

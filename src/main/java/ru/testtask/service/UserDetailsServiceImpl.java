@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import ru.testtask.model.User;
 import ru.testtask.repo.UserRepo;
 
+import java.util.Optional;
+
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
 
@@ -18,12 +20,12 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepo.findByUsername(username);
+        Optional<User> user = userRepo.findByUsername(username);
 
-        if (user == null) {
+        if (user.isEmpty()) {
             throw new UsernameNotFoundException(String.format("User with username %s does not exists", username));
         }
 
-        return user;
+        return user.get();
     }
 }

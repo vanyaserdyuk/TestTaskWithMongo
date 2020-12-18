@@ -3,6 +3,7 @@ package ru.testtask.controller;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import ru.testtask.dto.CreateUpdateUserDTO;
 import ru.testtask.dto.UserDTO;
@@ -58,11 +59,14 @@ public class UserController {
 
     @GetMapping("/name/{name}")
     public ResponseEntity<?> getUserByUsername(@PathVariable ("name") String name) {
-        User user = userService.getUserByUsername(name);
+        User user;
+        try {
+            user = userService.getUserByUsername(name);
+        }
 
-        if (user == null)
+        catch (UsernameNotFoundException e){
             return new ResponseEntity<>(String.format("User with name %s does not found", name), HttpStatus.NOT_FOUND);
-
+        }
         return new ResponseEntity<>(modelMapper.map(user, UserDTO.class), HttpStatus.OK);
     }
 
