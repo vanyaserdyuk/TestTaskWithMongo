@@ -78,8 +78,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
 
     @Override
     public Page<ChatMessage> findAllByRoom(String roomId){
-        Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE, Sort.by(Sort.Direction.DESC, "date"));
-        return messageRepo.findByChatRoomId(pageable, roomId);
+        return findAllByRoom(roomId, 0, Integer.MAX_VALUE);
     }
 
     @Override
