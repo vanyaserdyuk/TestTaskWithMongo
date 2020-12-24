@@ -3,10 +3,7 @@ package ru.testtask.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.testtask.dto.BackgroundJobDTO;
 import ru.testtask.service.BackgroundJobService;
 
@@ -24,27 +21,27 @@ public class JobController {
       return new ResponseEntity<>("The job has been started", HttpStatus.OK);
     }
 
-    @GetMapping("/cancel")
-    public ResponseEntity<String> cancelJob(){
-        backgroundJobService.cancelJob();
-        return new ResponseEntity<>("The job has been cancelled", HttpStatus.OK);
+    @PutMapping("/{id}")
+    public ResponseEntity<String> cancelJob(@PathVariable String id){
+        backgroundJobService.cancelJob(id);
+        return new ResponseEntity<>(String.format("The job with id %s has been cancelled", id), HttpStatus.OK);
     }
 
-    @GetMapping("/delete")
-    public ResponseEntity<String> deleteJob(@RequestParam String jobName){
-        backgroundJobService.deleteJob(jobName);
+    @DeleteMapping()
+    public ResponseEntity<String> deleteJob(@RequestParam String id){
+        backgroundJobService.deleteJob(id);
         return new ResponseEntity<>("The job has been deleted", HttpStatus.OK);
     }
 
-    @GetMapping("/info")
-    public ResponseEntity<String> getJobProgressAndStatus(){
-        BackgroundJobDTO backgroundJobDTO = backgroundJobService.getJobStatusAndProgress();
-        return new ResponseEntity<>(String.format("The job progress is %d percent and status is %s", backgroundJobDTO.getProgress(),
-                backgroundJobDTO.getJobStatus().toString()), HttpStatus.OK);
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getJobProgressAndStatus(@PathVariable String id){
+        BackgroundJobDTO backgroundJobDTO;
+        try {
+            backgroundJobDTO = backgroundJobService.getJobStatusAndProgress(id);
+        }
+        catch (NullPointerException e){
+            return new ResponseEntity<>(String.format("Job with ID %s does not found", id), HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(backgroundJobDTO, HttpStatus.OK);
     }
-
-
-
-
-
 }

@@ -20,7 +20,4 @@ public class BackgroundJob {
 
     @Transient
     private Runnable jobExecution;
-
-    @Transient
-    private boolean running;
 }
