@@ -21,15 +21,21 @@ public class JobController {
       return new ResponseEntity<>("The job has been started", HttpStatus.OK);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id}/cancel")
     public ResponseEntity<String> cancelJob(@PathVariable String id){
         backgroundJobService.cancelJob(id);
         return new ResponseEntity<>(String.format("The job with id %s has been cancelled", id), HttpStatus.OK);
     }
 
-    @DeleteMapping()
-    public ResponseEntity<String> deleteJob(@RequestParam String id){
-        backgroundJobService.deleteJob(id);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteJob(@PathVariable String id){
+        try {
+            backgroundJobService.deleteJob(id);
+        }
+        catch (RuntimeException e){
+            return new ResponseEntity<>("Running background job can't be deleted"
+                    , HttpStatus.OK);
+        }
         return new ResponseEntity<>("The job has been deleted", HttpStatus.OK);
     }
 

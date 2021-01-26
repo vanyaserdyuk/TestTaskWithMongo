@@ -1,7 +1,9 @@
 package ru.testtask.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 import ru.testtask.service.BackgroundJobService;
@@ -11,6 +13,7 @@ import javax.persistence.Id;
 @Document(collection = "jobs")
 @Data
 @Builder
+@AllArgsConstructor
 public class BackgroundJob {
     @Id
     private String id;
@@ -19,5 +22,6 @@ public class BackgroundJob {
     private BackgroundJobStatus jobStatus;
 
     @Transient
+    @Nullable
     private Runnable jobExecution;
 }
