@@ -12,6 +12,7 @@ import ru.testtask.model.BackgroundJobStatus;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BackgroundJobDTO {
+    private String id;
     private BackgroundJobStatus jobStatus;
     private int progress;
 }

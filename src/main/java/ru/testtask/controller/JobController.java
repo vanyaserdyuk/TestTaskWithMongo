@@ -14,11 +14,11 @@ public class JobController {
     @Autowired
     private BackgroundJobService backgroundJobService;
 
-    @GetMapping("/start")
+    @PostMapping("/start")
     public ResponseEntity<String> startJob(@RequestParam String jobName){
         backgroundJobService.createJob(jobName);
 
-      return new ResponseEntity<>("The job has been started", HttpStatus.OK);
+      return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PutMapping("/{id}/cancel")
@@ -28,13 +28,12 @@ public class JobController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteJob(@PathVariable String id){
+    public ResponseEntity<String> deleteJob(@PathVariable String id) {
         try {
             backgroundJobService.deleteJob(id);
-        }
-        catch (RuntimeException e){
+        } catch (RuntimeException e) {
             return new ResponseEntity<>("Running background job can't be deleted"
-                    , HttpStatus.OK);
+                    , HttpStatus.UNPROCESSABLE_ENTITY);
         }
         return new ResponseEntity<>("The job has been deleted", HttpStatus.OK);
     }
