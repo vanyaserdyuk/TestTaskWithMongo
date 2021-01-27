@@ -44,7 +44,7 @@ public class BackgroundJobService {
         runningBackgroundJobs.put(backgroundJob.getId(), backgroundJob);
     }
 
-    public void createJob(String name) {
+    public BackgroundJob createJob(String name) {
         BackgroundJob backgroundJob = BackgroundJob.builder().name(name).build();
         backgroundJob.setJobExecution(() -> {
             log.info("Background job with name {} and id {} started", backgroundJob.getName(), backgroundJob.getId());
@@ -63,12 +63,13 @@ public class BackgroundJobService {
             }
             if (backgroundJob.getProgress() == 100)
                 backgroundJob.setJobStatus(BackgroundJobStatus.COMPLETED);
-            runningBackgroundJobs.remove(backgroundJob);
+            runningBackgroundJobs.remove(backgroundJob.getId());
             backgroundJobRepo.save(backgroundJob);
             log.info("Background job with name {} and id {} is completed", backgroundJob.getName(), backgroundJob.getId());
         });
         saveJob(backgroundJob);
         startJob(backgroundJob);
+        return backgroundJob;
     }
 
     public void cancelJob(String id){
@@ -104,6 +105,10 @@ public class BackgroundJobService {
             throw new NullPointerException("This job doesn not exist");
         }
         return backgroundJob;
+    }
+
+    public List<BackgroundJob> getAllJobs(){
+        return backgroundJobRepo.findAll();
     }
 
 }
